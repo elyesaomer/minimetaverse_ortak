@@ -9,6 +9,15 @@ function registerAuthHandlers(io, socket, players, helpers) {
 
     // Ortak Giriş Başarılı İşlemi
     function onLoginSuccess(uData, username, isAdmin) {
+        const previousModel = uData.avatar && uData.avatar.model;
+        if (!uData.avatar) uData.avatar = {};
+        if (uData.avatar.model !== 'sanalika_v2') {
+            uData.avatar.model = 'classic_2';
+        }
+        if (previousModel !== uData.avatar.model) {
+            dataManager.savePersistentData();
+        }
+
         let hasValidTea = false;
         if (uData.teaExpiresAt) {
             if (Date.now() >= uData.teaExpiresAt) {
@@ -24,7 +33,7 @@ function registerAuthHandlers(io, socket, players, helpers) {
         players[socket.id] = {
             name: username,
             x: 400, y: 400,
-            model: (uData.avatar && uData.avatar.model) || 'classic',
+            model: uData.avatar.model,
             color: uData.avatar.shirtColor || '#3b82f6',
             shirt: (uData.avatar && uData.avatar.shirt) || (uData.avatar && uData.avatar.shirtColor) || '#3b82f6',
             pants: (uData.avatar && uData.avatar.pants) || 'pants_camo_cargo',

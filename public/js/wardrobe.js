@@ -14,7 +14,7 @@ let myInventory = {
     props: ['none']
 };
 let myAvatar = {
-    model: 'classic',
+    model: 'classic_2',
     hat: 'bere',
     face: 'none',
     skinColor: '#facc15',
@@ -218,7 +218,7 @@ function updateMoneyDisplay(amount) {
 }
 
 let previewAvatar = {
-    model: 'classic',
+    model: 'classic_2',
     hat: 'bere',
     face: 'none',
     skinColor: '#facc15',
@@ -241,6 +241,7 @@ function itemMatchesModel(itemModel, currentModel) {
 
 function sanitizeAvatarForModel(av, targetModel) {
     if (!av) return;
+    if (targetModel === 'classic') targetModel = 'classic_2';
     if (targetModel === 'sanalika_v2') {
         let hatItem = WARDROBE_CATALOG.hats.find(h => h.id === av.hat);
         if (!hatItem || !itemMatchesModel(hatItem.model, 'sanalika_v2')) {
@@ -267,33 +268,6 @@ function sanitizeAvatarForModel(av, targetModel) {
         let pantsItem = (WARDROBE_CATALOG.pants || []).find(p => p.id === av.pants);
         if (pantsItem && !itemMatchesModel(pantsItem.model, 'sanalika_v2')) {
             av.pants = 'pants_camo_cargo';
-        }
-    } else if (targetModel === 'classic') {
-        let hatItem = WARDROBE_CATALOG.hats.find(h => h.id === av.hat);
-        if (hatItem && !itemMatchesModel(hatItem.model, 'classic')) {
-            av.hat = 'bere';
-        }
-        let shoeItem = (WARDROBE_CATALOG.shoes || []).find(s => s.id === av.shoes);
-        if (shoeItem && !itemMatchesModel(shoeItem.model, 'classic')) {
-            av.shoes = 'sneakers';
-        }
-        let shirtItem = (WARDROBE_CATALOG.tshirts || []).find(t => t.id === av.shirt || t.id === av.color);
-        if (shirtItem && !itemMatchesModel(shirtItem.model, 'classic')) {
-            av.shirt = '#3b82f6';
-            av.color = '#3b82f6';
-        }
-        let pantsItem = (WARDROBE_CATALOG.pants || []).find(p => p.id === av.pants);
-        if (pantsItem && !itemMatchesModel(pantsItem.model, 'classic')) {
-            av.pants = 'pants_classic_jeans';
-        }
-        if (av.outfit) {
-            let outItem = (WARDROBE_CATALOG.outfits || []).find(o => o.id === av.outfit);
-            if (outItem && !itemMatchesModel(outItem.model, 'classic')) {
-                av.outfit = null;
-                av.shirt = '#3b82f6';
-                av.color = '#3b82f6';
-                av.pants = 'pants_classic_jeans';
-            }
         }
     } else if (targetModel === 'classic_2') {
         let hatItem = WARDROBE_CATALOG.hats.find(h => h.id === av.hat);
@@ -602,7 +576,7 @@ function renderWardrobeActiveGrid() {
     }
 
     let allItems = WARDROBE_CATALOG[currentWardrobeTab] || [];
-    let curModel = (previewAvatar && previewAvatar.model) || (myAvatar && myAvatar.model) || 'classic';
+    let curModel = (previewAvatar && previewAvatar.model) || (myAvatar && myAvatar.model) || 'classic_2';
     let items = allItems.filter(item => {
         // Model uyumluluğu filtrelemesi: Karakter 2.5D İzometrik, Klasik veya Klasik 2 modundayken sadece onunla uyumlu olanlar kalsın
         if (!itemMatchesModel(item.model, curModel)) {
@@ -731,7 +705,7 @@ socket.on('wardrobeUpdate', (data) => {
     if (data.avatar) {
         myAvatar = data.avatar;
         if (!myAvatar.shoes) myAvatar.shoes = (window.myGender === 'female' ? 'flats' : 'sneakers');
-        if (!myAvatar.model) myAvatar.model = 'classic';
+        if (myAvatar.model !== 'sanalika_v2') myAvatar.model = 'classic_2';
         if (!myAvatar.shirt) myAvatar.shirt = myAvatar.color || '#3b82f6';
         if (!myAvatar.pants) myAvatar.pants = (myAvatar.model === 'sanalika_v2') ? 'pants_camo_cargo' : 'pants_classic_jeans';
         if (!myAvatar.watch) myAvatar.watch = 'none';
@@ -744,7 +718,7 @@ socket.on('wardrobeUpdate', (data) => {
 
 socket.on('playerAvatarChange', (data) => {
     let av = data.avatar || {
-        model: data.model || 'classic',
+        model: data.model === 'sanalika_v2' ? 'sanalika_v2' : 'classic_2',
         hat: data.hat,
         face: data.face,
         skinColor: data.skinColor,
@@ -756,7 +730,7 @@ socket.on('playerAvatarChange', (data) => {
         heldItem: data.heldItem,
         shoes: data.shoes || 'sneakers'
     };
-    if (!av.model) av.model = data.model || 'classic';
+    av.model = av.model === 'sanalika_v2' ? 'sanalika_v2' : 'classic_2';
     if (!av.shirt) av.shirt = av.color || '#3b82f6';
     if (!av.pants) av.pants = (av.model === 'sanalika_v2') ? 'pants_camo_cargo' : 'pants_classic_jeans';
     if (!av.watch) av.watch = data.watch || 'none';
@@ -791,7 +765,7 @@ const PREVIEW_FACING_ANGLES_4WAY = [
 window.previewFacing = 'down';
 
 function rotateAvatarPreview(delta) {
-    let curModel = (previewAvatar && previewAvatar.model) || (myAvatar && myAvatar.model) || 'classic';
+    let curModel = (previewAvatar && previewAvatar.model) || (myAvatar && myAvatar.model) || 'classic_2';
     let isClassic = (curModel !== 'classic_2' && curModel !== 'sanalika_v2');
     let anglesList = isClassic ? PREVIEW_FACING_ANGLES_4WAY : PREVIEW_FACING_ANGLES;
 
@@ -865,7 +839,7 @@ function selectSkinSetSlot(slot) {
         if (typeof previewAvatar !== 'undefined') {
             previewAvatar = {
                 ...previewAvatar,
-                model: saved.model || previewAvatar.model || 'classic',
+                model: saved.model === 'sanalika_v2' ? 'sanalika_v2' : 'classic_2',
                 hat: saved.hat || 'bere',
                 face: saved.face || 'none',
                 skinColor: saved.skinColor || '#facc15',
@@ -896,7 +870,7 @@ function saveCurrentSkinSet() {
     let setName = (mySkinSets && mySkinSets[slot] && mySkinSets[slot].name) || defaultNames[slot] || ('Set ' + slot);
 
     let setPayload = {
-        model: avToSave.model || 'classic',
+        model: avToSave.model === 'sanalika_v2' ? 'sanalika_v2' : 'classic_2',
         hat: avToSave.hat || 'bere',
         face: avToSave.face || 'none',
         skinColor: avToSave.skinColor || '#facc15',

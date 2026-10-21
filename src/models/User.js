@@ -37,7 +37,7 @@ const UserSchema = new mongoose.Schema({
         default: false
     },
     avatar: {
-        model: { type: String, default: 'classic' },
+        model: { type: String, default: 'classic_2' },
         hat: { type: String, default: 'bere' },
         face: { type: String, default: 'none' },
         skinColor: { type: String, default: '#ffd1a4' },

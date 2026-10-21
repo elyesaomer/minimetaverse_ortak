@@ -144,7 +144,7 @@ function registerEconomyHandlers(io, socket, players, helpers) {
         io.to(players[socket.id].room).emit('playerAvatarChange', {
             id: socket.id,
             avatar: updatedAvatar,
-            model: updatedAvatar.model || 'classic',
+            model: updatedAvatar.model || 'classic_2',
             hat: updatedAvatar.hat,
             face: updatedAvatar.face,
             skinColor: updatedAvatar.skinColor,
@@ -166,7 +166,7 @@ function registerEconomyHandlers(io, socket, players, helpers) {
         let userData = dataManager.persistentData.users[username];
         if (!userData) return;
 
-        let model = (data.model === 'sanalika_v2' || data.model === 'classic_2') ? data.model : 'classic';
+        let model = data.model === 'sanalika_v2' ? 'sanalika_v2' : 'classic_2';
         if (!userData.avatar) userData.avatar = {};
         userData.avatar.model = model;
         players[socket.id].model = model;
@@ -550,7 +550,7 @@ function registerEconomyHandlers(io, socket, players, helpers) {
         // Verilen avatar kombinini ya da kullanıcının mevcut avatarını slot'a kaydet
         let currentAv = data.avatar || userData.avatar;
         userData.skinSets[slot] = {
-            model: currentAv.model || 'classic',
+            model: currentAv.model || 'classic_2',
             hat: currentAv.hat || 'bere',
             face: currentAv.face || 'none',
             skinColor: currentAv.skinColor || '#facc15',
@@ -587,7 +587,7 @@ function registerEconomyHandlers(io, socket, players, helpers) {
         let chosenSet = userData.skinSets[slot];
         userData.avatar = {
             ...userData.avatar,
-            model: chosenSet.model || userData.avatar.model || 'classic',
+            model: chosenSet.model === 'sanalika_v2' ? 'sanalika_v2' : 'classic_2',
             hat: chosenSet.hat || 'bere',
             face: chosenSet.face || 'none',
             skinColor: chosenSet.skinColor || '#facc15',

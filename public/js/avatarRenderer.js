@@ -4308,229 +4308,6 @@ function drawClassic2Torso(targetCtx, pX, pY, p, facing, isFemale) {
     }
 }
 
-// =========================================================================
-// === 6.0 NOSTALJİK KLASİK 1 AVATAR MOTORU (TAMAMEN ESKİ SÜRÜM ÖN GÖRÜNÜM) ===
-// =========================================================================
-
-function drawClassicAvatar(ctx, pX, pY, p, facing, isSitting, legSwing, isMoving, isPreview) {
-    // Tamamen Eski Sürüm: Klasik modelde 4 yön veya 8 yön dönmesi kesinlikle yoktur
-    let skinColor = p.skinColor || "#ffd1a4";
-    let isDressOrSkirt = (p.color && (p.color.startsWith('dress_') || p.color.startsWith('skirt_') || p.color.startsWith('outfit_')));
-    let shoeType = p.shoes || 'sneakers';
-    let pantsColor = (p.color === 'overalls_blue') ? '#1e40af' : (p.pants === 'pants_classic_black' ? '#1e293b' : null);
-
-    // 1. Yumuşak Zemin Gölgesi (Önizleme değilse)
-    if (!isPreview) {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
-        ctx.beginPath();
-        ctx.ellipse(pX, pY + (isSitting ? 16 : 22), isSitting ? 14 : 12, isSitting ? 5.5 : 5, 0, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
-    // 2. Bacaklar & Ayakkabılar
-    if (isSitting) {
-        // Oturma Pozunda Bacaklar (Oturulan koltuk yönüne göre)
-        drawAvatarLegsAndShoes(ctx, pX, pY, 0, skinColor, shoeType, isDressOrSkirt, true, facing, false, pantsColor);
-    } else {
-        // Ayakta ve Yürürken: Tamamen orijinal klasik dikey bacaklar (asla arkaya/yana dönmez)
-        let legColor = isDressOrSkirt ? skinColor : (pantsColor || "#1e293b");
-        ctx.fillStyle = legColor;
-        ctx.fillRect(pX - 8, pY + 12 - legSwing, 5, 8 + legSwing);
-        ctx.fillRect(pX + 3, pY + 12 + legSwing, 5, 8 - legSwing);
-
-        let leftShoeY = pY + 18 - legSwing;
-        let rightShoeY = pY + 18 + legSwing;
-        drawSingleShoe(ctx, pX - 9, leftShoeY, shoeType, skinColor, 0, false, 'down', false);
-        drawSingleShoe(ctx, pX + 2, rightShoeY, shoeType, skinColor, 0, false, 'down', false);
-    }
-
-    if (!isSitting) {
-        let sleeveColor = p.color && p.color.startsWith('#') ? p.color : "#3b82f6";
-        if (p.color && (p.color.startsWith('dress_') || p.color.startsWith('skirt_') || p.color === 'polo' || p.color === 'hoodie' || p.color === 'leather')) {
-            if (p.color === 'dress_pink') sleeveColor = "#f472b6";
-            else if (p.color === 'dress_black') sleeveColor = "#18181b";
-            else if (p.color === 'dress_red') sleeveColor = "#e11d48";
-            else if (p.color === 'skirt_crop') sleeveColor = skinColor;
-            else if (p.color === 'skirt_denim') sleeveColor = "#f1f5f9";
-            else if (p.color === 'polo') sleeveColor = "#f8fafc";
-            else if (p.color === 'hoodie') sleeveColor = "#6366f1";
-            else if (p.color === 'leather') sleeveColor = "#18181b";
-        }
-
-        const heldItem = p.heldItem || (p.hasTea ? 'cay' : 'none');
-        const smokeState = heldItem === 'sigara' ? getAvatarSmokingState(p, isPreview) : null;
-        const facingDir = normalize8WayFacing(facing || 'down');
-        const armSwing = isMoving ? legSwing * 0.06 : Math.sin(Date.now() / 650) * 0.04;
-        const drawArm = (side, handTarget = null) => {
-            const shoulderX = pX + side * 8;
-            const shoulderY = pY - 6;
-            if (handTarget) {
-                const elbowX = shoulderX + (handTarget.x - shoulderX) * 0.58;
-                const elbowY = shoulderY + (handTarget.y - shoulderY) * 0.58;
-
-                ctx.save();
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-                ctx.strokeStyle = sleeveColor;
-                ctx.lineWidth = 5;
-                ctx.beginPath();
-                ctx.moveTo(shoulderX, shoulderY);
-                ctx.lineTo(elbowX, elbowY);
-                ctx.stroke();
-                ctx.strokeStyle = skinColor;
-                ctx.lineWidth = 3.5;
-                ctx.beginPath();
-                ctx.moveTo(elbowX, elbowY);
-                ctx.lineTo(handTarget.x, handTarget.y);
-                ctx.stroke();
-                ctx.fillStyle = skinColor;
-                ctx.beginPath();
-                ctx.arc(handTarget.x, handTarget.y, 2.2, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
-                return;
-            }
-
-            const elbowX = pX + side * (11 + Math.sin(armSwing) * 2);
-            const elbowY = pY + 1 + armSwing * side * 5;
-            const handX = pX + side * (12 + Math.sin(armSwing) * 3);
-            const handY = pY + 8 + armSwing * side * 8;
-
-            ctx.save();
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.strokeStyle = sleeveColor;
-            ctx.lineWidth = 5;
-            ctx.beginPath();
-            ctx.moveTo(shoulderX, shoulderY);
-            ctx.lineTo(elbowX, elbowY);
-            ctx.stroke();
-            ctx.strokeStyle = skinColor;
-            ctx.lineWidth = 3.5;
-            ctx.beginPath();
-            ctx.moveTo(elbowX, elbowY);
-            ctx.lineTo(handX, handY);
-            ctx.stroke();
-            ctx.fillStyle = skinColor;
-            ctx.beginPath();
-            ctx.arc(handX, handY, 2.2, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-        };
-
-        if (heldItem === 'sigara') {
-            const isLeft = facingDir === 'left' || facingDir === 'down-left' || facingDir === 'up-left';
-            let handX = pX + (isLeft ? -12 : 11);
-            let handY = pY + 2;
-            if (facingDir === 'down-right') { handX = pX + 13; handY = pY + 4; }
-            else if (facingDir === 'right') { handX = pX + 12; handY = pY + 1; }
-            else if (facingDir === 'up-right') { handX = pX + 8; handY = pY - 3; }
-            else if (facingDir === 'up') { handX = pX + 8; handY = pY - 2; }
-            else if (facingDir === 'up-left') { handX = pX - 8; handY = pY - 3; }
-            else if (facingDir === 'left') { handX = pX - 12; handY = pY + 1; }
-            else if (facingDir === 'down-left') { handX = pX - 13; handY = pY + 4; }
-            else if (isPreview) { handX = pX + 12; }
-
-            let handTarget = { x: handX, y: handY };
-            if (smokeState && smokeState.liftProgress > 0) {
-                const mouth = getAvatarMouthPos(pX, pY, facingDir, 'classic');
-                handTarget = {
-                    x: handX + (mouth.x - handX) * smokeState.liftProgress,
-                    y: handY + (mouth.y - handY) * smokeState.liftProgress
-                };
-            }
-
-            drawArm(isLeft ? -1 : 1, handTarget);
-            drawArm(isLeft ? 1 : -1);
-        } else {
-            drawArm(-1);
-            drawArm(1);
-        }
-    }
-
-    // 3. Gövde & Kıyafet (Tamamen orijinal klasik simetrik ön chibi gövdesi)
-    drawAvatarBodyAndClothes(ctx, pX, pY, p.outfit || p.shirt || p.color, skinColor, 'down', false);
-
-    // 3.1 Oturmaya Özel Kollar
-    if (isSitting) {
-        ctx.save();
-        let sleeveColor = p.color && p.color.startsWith('#') ? p.color : "#3b82f6";
-        if (p.color && (p.color.startsWith('dress_') || p.color.startsWith('skirt_') || p.color === 'polo' || p.color === 'hoodie' || p.color === 'leather')) {
-            if (p.color === 'dress_pink') sleeveColor = "#f472b6";
-            else if (p.color === 'dress_black') sleeveColor = "#18181b";
-            else if (p.color === 'dress_red') sleeveColor = "#e11d48";
-            else if (p.color === 'skirt_crop') sleeveColor = skinColor;
-            else if (p.color === 'skirt_denim') sleeveColor = "#f1f5f9";
-            else if (p.color === 'polo') sleeveColor = "#f8fafc";
-            else if (p.color === 'hoodie') sleeveColor = "#6366f1";
-            else if (p.color === 'leather') sleeveColor = "#18181b";
-        }
-
-        if (facing === 'right') {
-            ctx.fillStyle = sleeveColor;
-            ctx.beginPath(); ctx.roundRect(pX - 2, pY - 2, 11, 5, 2.5); ctx.fill();
-            ctx.fillStyle = skinColor;
-            ctx.beginPath(); ctx.arc(pX + 9, pY, 2.5, 0, Math.PI * 2); ctx.fill();
-        } else if (facing === 'left') {
-            ctx.fillStyle = sleeveColor;
-            ctx.beginPath(); ctx.roundRect(pX - 9, pY - 2, 11, 5, 2.5); ctx.fill();
-            ctx.fillStyle = skinColor;
-            ctx.beginPath(); ctx.arc(pX - 9, pY, 2.5, 0, Math.PI * 2); ctx.fill();
-        } else if (facing === 'up') {
-            ctx.fillStyle = sleeveColor;
-            ctx.fillRect(pX - 11, pY - 2, 4, 8);
-            ctx.fillRect(pX + 7, pY - 2, 4, 8);
-            ctx.fillStyle = skinColor;
-            ctx.beginPath(); ctx.arc(pX - 9, pY + 7, 2, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.arc(pX + 9, pY + 7, 2, 0, Math.PI * 2); ctx.fill();
-        } else {
-            // Öne dönük oturma (facing === 'down')
-            ctx.fillStyle = sleeveColor;
-            ctx.beginPath();
-            ctx.moveTo(pX - 10, pY - 4); ctx.lineTo(pX - 4, pY + 6); ctx.lineTo(pX - 7, pY + 9); ctx.lineTo(pX - 12, pY - 2);
-            ctx.closePath(); ctx.fill();
-            ctx.fillStyle = skinColor;
-            ctx.beginPath(); ctx.arc(pX - 5, pY + 8, 2.5, 0, Math.PI * 2); ctx.fill();
-
-            ctx.fillStyle = sleeveColor;
-            ctx.beginPath();
-            ctx.moveTo(pX + 10, pY - 4); ctx.lineTo(pX + 6, pY + 6); ctx.lineTo(pX + 3, pY + 5); ctx.lineTo(pX + 8, pY - 3);
-            ctx.closePath(); ctx.fill();
-            ctx.fillStyle = skinColor;
-            ctx.beginPath(); ctx.arc(pX + 5, pY + 7, 2.5, 0, Math.PI * 2); ctx.fill();
-        }
-        ctx.restore();
-    }
-
-    // 4. Kafa (Tamamen simetrik ön kafa)
-    ctx.fillStyle = skinColor;
-    ctx.beginPath();
-    ctx.arc(pX, pY - 18, 10, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "rgba(0,0,0,0.2)";
-    ctx.lineWidth = 1.2;
-    ctx.stroke();
-
-    // 5. Şapkalar & Saç Modelleri (Tamamen eski sürüm: dönme yok, her zaman ön görünüm)
-    drawAvatarHairAndHats(ctx, pX, pY, p.hat || 'none', 'down');
-
-    // 6. Gözler ve Yüz Aksesuarları (Tamamen eski sürüm: her zaman iki göz önde bakar, sadece bakış yönüne göre hafif kayar)
-    let eyeOffsetX = 0, eyeOffsetY = 0;
-    if (facing === 'left' || facing === 'down-left' || facing === 'up-left') eyeOffsetX = -3;
-    else if (facing === 'right' || facing === 'down-right' || facing === 'up-right') eyeOffsetX = 3;
-    else if (facing === 'up') eyeOffsetY = -2;
-    else eyeOffsetY = 1;
-    drawAvatarFaceAndEyes(ctx, pX, pY, p.face || 'none', eyeOffsetX, eyeOffsetY, 'down');
-
-    // 7. Önizlemede elde taşınan eşya
-    if (isPreview) {
-        let activeHeld = p.heldItem || (p.hasTea ? 'cay' : 'none');
-        if (activeHeld && activeHeld !== 'none') {
-            drawHeldItem(ctx, pX, pY, activeHeld, true, 'down', false, 'classic', p);
-        }
-    }
-}
-
 function drawClassic2Avatar(ctx, pX, pY, p, facing, isSitting, legSwing, playerWalkCycle, isMoving, isPreview) {
     facing = normalize8WayFacing(facing || 'down');
     let isFemale = isFemaleAvatar(p, p.color, p.hat, p.shoes);
@@ -4753,14 +4530,9 @@ function drawAvatarPreview() {
         drawHeldItem(pCtx, 0, 0, activeAv.heldItem, true, facing, true, 'sanalika_v2', activeAv);
         pCtx.restore();
         return;
-    } else if (activeAv.model === 'classic_2') {
+    } else {
         let previewCycle = Date.now() / 250;
         drawClassic2Avatar(pCtx, 0, 0, activeAv, facing, false, 0, previewCycle, false, true);
-        pCtx.restore();
-        return;
-    } else {
-        // Nostaljik Klasik Model Önizleme
-        drawClassicAvatar(pCtx, 0, 0, activeAv, 'down', false, 0, false, true);
         pCtx.restore();
         return;
     }
@@ -4793,23 +4565,15 @@ function drawAnimatedPlayer(p, id) {
     ctx.ellipse(pX, p.y + (isSitting ? 16 : 22), isSitting ? 14 : 12, isSitting ? 5.5 : 5, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    let isClassicModel = (p.model !== 'sanalika_v2' && p.model !== 'classic_2');
+    const model = p.model === 'sanalika_v2' ? 'sanalika_v2' : 'classic_2';
     let rawFacing = (id === myId) ? myFacing : (p.facing || 'down');
     let facing = normalize8WayFacing(rawFacing);
-    if (isClassicModel) {
-        // Nostaljik klasik model: 8'li dönme yok, sadece 4 ana yön
-        if (facing === 'down-right' || facing === 'up-right') facing = 'right';
-        else if (facing === 'down-left' || facing === 'up-left') facing = 'left';
-    }
     let isFemale = isFemaleAvatar(p, p.color, p.hat, p.shoes);
 
-    if (p.model === 'sanalika_v2') {
+    if (model === 'sanalika_v2') {
         drawRealistic25dAvatar(ctx, pX, pY, p, facing, isSitting, legSwing, false);
-    } else if (p.model === 'classic_2') {
-        drawClassic2Avatar(ctx, pX, pY, p, facing, isSitting, legSwing, playerWalkCycle, isMoving, false);
     } else {
-        // Nostaljik Klasik 1 Modeli
-        drawClassicAvatar(ctx, pX, pY, p, facing, isSitting, legSwing, isMoving, false);
+        drawClassic2Avatar(ctx, pX, pY, p, facing, isSitting, legSwing, playerWalkCycle, isMoving, false);
     }
 
     // 7. Elde Taşınan Eşyalar & Balık Tutma
@@ -4851,9 +4615,9 @@ function drawAnimatedPlayer(p, id) {
 
         ctx.restore();
     } else {
-        if (p.model !== 'classic_2') {
+        if (model !== 'classic_2') {
             let activeHeld = p.heldItem || (p.hasTea ? 'cay' : 'none');
-            drawHeldItem(ctx, pX, pY, activeHeld, false, facing, (p.model === 'sanalika_v2'), p.model, p);
+            drawHeldItem(ctx, pX, pY, activeHeld, false, facing, (model === 'sanalika_v2'), model, p);
         }
     }
 

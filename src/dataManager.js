@@ -381,7 +381,7 @@ async function registerUser(rawName, password, gender = 'male') {
         isAdmin: isUserAdmin(cleanName),
         isMod: isUserMod(cleanName),
         avatar: {
-            model: 'classic',
+            model: 'classic_2',
             hat: isFem ? 'hair_long' : 'bere',
             face: 'none',
             skinColor: '#ffd1a4',

@@ -1285,7 +1285,7 @@ function update8WayFacingFromKeys() {
     let ky = (keys.s ? 1 : 0) - (keys.w ? 1 : 0);
     if (kx !== 0 || ky !== 0) {
         let p = (typeof players !== 'undefined') ? players[myId] : null;
-        let curModel = (p && p.model) || (typeof myAvatar !== 'undefined' && myAvatar.model) || 'classic';
+        let curModel = (p && p.model) || (typeof myAvatar !== 'undefined' && myAvatar.model) || 'classic_2';
         let isClassic = (curModel !== 'classic_2' && curModel !== 'sanalika_v2');
         let newFacing;
         if (isClassic) {
@@ -1610,7 +1610,7 @@ function gameLoop(timestamp) {
         let activeVy = p.vy;
 
         if (Math.abs(activeVx) > 0.01 || Math.abs(activeVy) > 0.01) {
-            let curModel = (p && p.model) || (typeof myAvatar !== 'undefined' && myAvatar.model) || 'classic';
+            let curModel = (p && p.model) || (typeof myAvatar !== 'undefined' && myAvatar.model) || 'classic_2';
             let isClassic = (curModel !== 'classic_2' && curModel !== 'sanalika_v2');
             let curDir;
             if (isClassic) {
