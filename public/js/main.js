@@ -745,6 +745,8 @@ function startTurnTimer(durationSec) {
 // --- 6. OYUN BAŞLATMA VE LOBİ ---
 socket.on('startGame', (gameType) => {
     closeTableSelectModal();
+    const statusEl = document.getElementById('modalStatus');
+    if (statusEl) statusEl.innerText = 'Oyun başladı!';
     if (gameType === 'xox') {
         const gameModal = document.getElementById('gameModal');
         if (gameModal) gameModal.style.display = 'none';

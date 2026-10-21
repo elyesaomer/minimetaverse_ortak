@@ -12,7 +12,7 @@ socket.on('okey101Update', (data) => {
     if (!data.isSpectator && data.players && !data.players.includes(socket.id)) {
         return;
     }
-    if (typeof currentRoom !== 'undefined' && currentRoom !== 'kafe' && currentRoom !== 'dostlar_kiraathanesi') {
+    if (typeof currentRoom !== 'undefined' && !['kafe', 'dostlar_kiraathanesi', 'nargile_cafe'].includes(currentRoom)) {
         return;
     }
 
