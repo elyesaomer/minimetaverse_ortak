@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transformice Fare Pet - 8 Yönlü Sprite Studio & Preview</title>
+    <style>
+        :root {
+            --bg-color: #0f1117;
+            --panel-bg: rgba(22, 27, 34, 0.85);
+            --border-color: #30363d;
+            --accent-color: #e28743;
+            --accent-hover: #f09c5b;
+            --text-main: #f0f6fc;
+            --text-sub: #8b949e;
+            --tfm-brown: #693f21;
+            --tfm-pink: #deb398;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            backdrop-filter: blur(8px);
+        }
+
+        h1 {
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--accent-color);
+        }
+
+        .badge {
+            background: rgba(226, 135, 67, 0.2);
+            border: 1px solid var(--accent-color);
+            color: var(--accent-hover);
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 460px 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 1000px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Viewport Canvas */
+        .stage-container {
+            position: relative;
+            background: radial-gradient(circle at center, #232b38 0%, #10141d 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            height: 280px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .grid-bg {
+            background-size: 24px 24px;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+        }
+
+        canvas {
+            image-rendering: auto;
+        }
+
+        /* 8-Way D-Pad */
+        .dpad-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dpad-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 56px);
+            grid-template-rows: repeat(3, 56px);
+            gap: 8px;
+        }
+
+        .dpad-btn {
+            background: #21262d;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+        }
+
+        .dpad-btn:hover {
+            background: #30363d;
+            border-color: var(--accent-color);
+        }
+
+        .dpad-btn.active {
+            background: var(--accent-color);
+            color: #000;
+            border-color: #fff;
+            transform: scale(1.05);
+            box-shadow: 0 0 12px rgba(226, 135, 67, 0.5);
+        }
+
+        .dpad-btn .sub {
+            font-size: 10px;
+            opacity: 0.8;
+            font-weight: normal;
+        }
+
+        .dpad-center {
+            background: #161b22;
+            border: 1px dashed var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: var(--text-sub);
+            border-radius: 8px;
+        }
+
+        /* Controls */
+        .controls-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn-toggle {
+            flex: 1;
+            padding: 10px 14px;
+            background: #21262d;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.15s;
+        }
+
+        .btn-toggle.active {
+            background: #238636;
+            border-color: #2ea043;
+            color: #fff;
+        }
+
+        .slider-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            color: var(--text-sub);
+        }
+
+        .slider-group input[type="range"] {
+            flex: 1;
+            accent-color: var(--accent-color);
+        }
+
+        /* Sprite Sheet Atlas Viewer */
+        .sheet-viewer-card {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .sheet-scroll-box {
+            background: #11141a;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            max-height: 640px;
+            overflow: auto;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .sheet-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        #sheetCanvas {
+            border: 1px solid #30363d;
+            background: #1c2128;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .status-bar {
+            padding: 10px 16px;
+            background: rgba(35, 134, 54, 0.15);
+            border: 1px solid #2ea043;
+            border-radius: 8px;
+            color: #3fb950;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .action-btn {
+            background: var(--accent-color);
+            color: #120c08;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .action-btn:hover {
+            background: var(--accent-hover);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>
+            🐭 Transformice Fare Pet 8-Yönlü Sprite Stüdyosu
+            <span class="badge">Dört Ayaklı & TFM Sanat Tarzı</span>
+        </h1>
+        <div style="display: flex; gap: 10px;">
+            <button class="action-btn" id="btnExportPng">💾 PNG Sprite Sheet Kaydet</button>
+        </div>
+    </header>
+
+    <div class="status-bar" id="statusBar">
+        <span>✅ Transformice 8 Yönlü Dört Ayaklı Vektör Motoru Hazır (64 Kare: 8 Yön Idle + 8 Yön Walk)</span>
+        <span id="saveStatus" style="font-weight: 600;"></span>
+    </div>
+
+    <div class="main-layout">
+        <!-- SOL PANEL: CANLI ÖNİZLEME VE KONTROLLER -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div class="card">
+                <div class="card-title">
+                    <span>Canlı İzometrik Animasyon</span>
+                    <span id="currentInfo" style="font-size: 12px; color: var(--accent-color);">down | walk | frame 0</span>
+                </div>
+
+                <div class="stage-container grid-bg">
+                    <canvas id="previewCanvas" width="400" height="280"></canvas>
+                </div>
+
+                <!-- Animasyon Modu Seçici -->
+                <div class="controls-row">
+                    <button class="btn-toggle" id="btnIdle">
+                        💤 Bekleme (Idle)
+                    </button>
+                    <button class="btn-toggle active" id="btnWalk">
+                        🐾 Yürüme (4 Ayaklı Walk)
+                    </button>
+                </div>
+
+                <!-- Hız & Boyut Kontrolleri -->
+                <div class="slider-group">
+                    <span>Hız:</span>
+                    <input type="range" id="speedSlider" min="2" max="14" value="7">
+                    <span id="speedVal">7 FPS</span>
+                </div>
+
+                <div class="slider-group">
+                    <span>Ölçek:</span>
+                    <input type="range" id="scaleSlider" min="1" max="4" step="0.5" value="2.5">
+                    <span id="scaleVal">2.5x</span>
+                </div>
+            </div>
+
+            <!-- 8 YÖNLÜ D-PAD / PUSULA -->
+            <div class="card">
+                <div class="card-title">
+                    <span>8 Yön Seçici (Pusula)</span>
+                    <span style="font-size: 12px; color: var(--text-sub);">Oyunla %100 Uyumlu</span>
+                </div>
+
+                <div class="dpad-container">
+                    <div class="dpad-grid">
+                        <button class="dpad-btn" data-dir="up-left">↖<span class="sub">NW</span></button>
+                        <button class="dpad-btn" data-dir="up">↑<span class="sub">N</span></button>
+                        <button class="dpad-btn" data-dir="up-right">↗<span class="sub">NE</span></button>
+
+                        <button class="dpad-btn" data-dir="left">←<span class="sub">W</span></button>
+                        <div class="dpad-center">8-WAY</div>
+                        <button class="dpad-btn" data-dir="right">→<span class="sub">E</span></button>
+
+                        <button class="dpad-btn" data-dir="down-left">↙<span class="sub">SW</span></button>
+                        <button class="dpad-btn active" data-dir="down">↓<span class="sub">S</span></button>
+                        <button class="dpad-btn" data-dir="down-right">↘<span class="sub">SE</span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SAĞ PANEL: TÜM SPRITE SHEET ATLASI -->
+        <div class="card sheet-viewer-card">
+            <div class="card-title">
+                <span>Tam Sprite Sheet Matrisi (256x1024 - 64 Frame)</span>
+                <span style="font-size: 12px; color: var(--text-sub);">Sütunlar: 4 Frame | Satırlar: 16 (8 Idle + 8 Walk)</span>
+            </div>
+
+            <p style="font-size: 13px; color: var(--text-sub);">
+                Aşağıdaki tablo, hem vektör SVG (<a href="/assets/pets/tfm_mouse_8way.svg" target="_blank" style="color: var(--accent-color)">tfm_mouse_8way.svg</a>) hem de yüksek çözünürlüklü PNG formatında üretilen 8 yönlü hareket tablosudur.
+            </p>
+
+            <div class="sheet-scroll-box">
+                <div class="sheet-container">
+                    <canvas id="sheetCanvas" width="256" height="1024"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TFM Mouse Renderer Kütüphanesini Dahil Et -->
+    <script src="/js/renderers/tfmMouseRenderer.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const renderer = window.TfmMouseRenderer;
+            if (!renderer) {
+                console.error("TfmMouseRenderer yüklenemedi!");
+                return;
+            }
+
+            // Durum Değişkenleri
+            let currentDir = 'down';
+            let currentAnim = 'walk';
+            let currentFrame = 0;
+            let animSpeed = 7; // FPS
+            let currentScale = 2.5;
+            let lastFrameTime = performance.now();
+
+            const previewCanvas = document.getElementById('previewCanvas');
+            const previewCtx = previewCanvas.getContext('2d');
+            const sheetCanvas = document.getElementById('sheetCanvas');
+            const currentInfo = document.getElementById('currentInfo');
+            const saveStatus = document.getElementById('saveStatus');
+
+            // 1. Sprite Sheet'i Sağdaki Canvas'a Çizdir
+            function renderFullSpriteSheet() {
+                const sheetW = 4 * renderer.frameWidth; // 256
+                const sheetH = 16 * renderer.frameHeight; // 1024
+                sheetCanvas.width = sheetW;
+                sheetCanvas.height = sheetH;
+                const sCtx = sheetCanvas.getContext('2d');
+
+                sCtx.clearRect(0, 0, sheetW, sheetH);
+
+                let row = 0;
+                const anims = ['idle', 'walk'];
+
+                for (const anim of anims) {
+                    for (let d = 0; d < renderer.directions.length; d++) {
+                        const dir = renderer.directions[d];
+                        for (let f = 0; f < 4; f++) {
+                            const cx = f * renderer.frameWidth;
+                            const cy = row * renderer.frameHeight;
+
+                            // Hücre kılavuz çizgisi
+                            sCtx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+                            sCtx.strokeRect(cx, cy, renderer.frameWidth, renderer.frameHeight);
+
+                            // Etiket
+                            if (f === 0) {
+                                sCtx.fillStyle = anim === 'idle' ? '#58a6ff' : '#7ee787';
+                                sCtx.font = '9px monospace';
+                                sCtx.fillText(`${anim[0].toUpperCase()}:${dir}`, cx + 2, cy + 10);
+                            }
+
+                            // Fare Çizimi
+                            sCtx.save();
+                            sCtx.translate(cx + renderer.frameWidth / 2, cy + renderer.frameHeight / 2 + 10);
+                            renderer.draw(sCtx, {
+                                direction: dir,
+                                animation: anim,
+                                frame: f,
+                                scale: 1.0,
+                                showShadow: true
+                            });
+                            sCtx.restore();
+                        }
+                        row++;
+                    }
+                }
+
+                // Otomatik olarak sunucuya PNG olarak kaydet
+                autoSavePngToServer();
+            }
+
+            // Otomatik PNG Kaydetme İsteği
+            async function autoSavePngToServer() {
+                try {
+                    const dataUrl = sheetCanvas.toDataURL('image/png');
+                    saveStatus.textContent = '💾 PNG Sunucuya yazılıyor...';
+                    const res = await fetch('/api/dev/save-pet-asset', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            filename: 'tfm_mouse_spritesheet.png',
+                            base64: dataUrl
+                        })
+                    });
+                    const json = await res.json();
+                    if (json.success) {
+                        saveStatus.textContent = '✅ tfm_mouse_spritesheet.png Başarıyla Kaydedildi!';
+                    } else {
+                        saveStatus.textContent = '⚠️ ' + (json.error || 'Kaydetme hatası');
+                    }
+                } catch (e) {
+                    console.warn("Otomatik kaydetme isteği:", e);
+                    saveStatus.textContent = 'PNG Bellekte hazır';
+                }
+            }
+
+            document.getElementById('btnExportPng').addEventListener('click', autoSavePngToServer);
+
+            // 2. Canlı Animasyon Döngüsü
+            function animLoop(now) {
+                requestAnimationFrame(animLoop);
+
+                const interval = 1000 / animSpeed;
+                if (now - lastFrameTime >= interval) {
+                    currentFrame = (currentFrame + 1) % 4;
+                    lastFrameTime = now;
+                }
+
+                // Canvas'ı Temizle
+                previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+
+                // Ortala ve Çiz
+                previewCtx.save();
+                previewCtx.translate(previewCanvas.width / 2, previewCanvas.height / 2 + 15);
+
+                renderer.draw(previewCtx, {
+                    direction: currentDir,
+                    animation: currentAnim,
+                    frame: currentFrame,
+                    scale: currentScale,
+                    showShadow: true
+                });
+
+                previewCtx.restore();
+
+                // Bilgi Güncelle
+                currentInfo.textContent = `${currentDir.toUpperCase()} | ${currentAnim.toUpperCase()} | Frame: ${currentFrame + 1}/4`;
+            }
+
+            // 3. UI Kontrolleri ve Olay Dinleyicileri
+            const dpadBtns = document.querySelectorAll('.dpad-btn');
+            dpadBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    dpadBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentDir = btn.getAttribute('data-dir');
+                });
+            });
+
+            const btnIdle = document.getElementById('btnIdle');
+            const btnWalk = document.getElementById('btnWalk');
+
+            btnIdle.addEventListener('click', () => {
+                btnIdle.classList.add('active');
+                btnWalk.classList.remove('active');
+                currentAnim = 'idle';
+                currentFrame = 0;
+            });
+
+            btnWalk.addEventListener('click', () => {
+                btnWalk.classList.add('active');
+                btnIdle.classList.remove('active');
+                currentAnim = 'walk';
+                currentFrame = 0;
+            });
+
+            const speedSlider = document.getElementById('speedSlider');
+            const speedVal = document.getElementById('speedVal');
+            speedSlider.addEventListener('input', (e) => {
+                animSpeed = parseInt(e.target.value);
+                speedVal.textContent = animSpeed + ' FPS';
+            });
+
+            const scaleSlider = document.getElementById('scaleSlider');
+            const scaleVal = document.getElementById('scaleVal');
+            scaleSlider.addEventListener('input', (e) => {
+                currentScale = parseFloat(e.target.value);
+                scaleVal.textContent = currentScale + 'x';
+            });
+
+            // Başlat
+            renderFullSpriteSheet();
+            requestAnimationFrame(animLoop);
+        });
+    </script>
+</body>
+</html>

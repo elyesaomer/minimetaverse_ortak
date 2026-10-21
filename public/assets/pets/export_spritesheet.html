@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 256px; height: 1024px; background: transparent; overflow: hidden; }
+        canvas { display: block; width: 256px; height: 1024px; }
+    </style>
+</head>
+<body>
+    <canvas id="c" width="256" height="1024"></canvas>
+    <script src="/js/renderers/tfmMouseRenderer.js"></script>
+    <script>
+        const renderer = window.TfmMouseRenderer;
+        const c = document.getElementById('c');
+        const ctx = c.getContext('2d');
+        const anims = ['idle', 'walk'];
+        let row = 0;
+
+        for (const anim of anims) {
+            for (let d = 0; d < renderer.directions.length; d++) {
+                const dir = renderer.directions[d];
+                for (let f = 0; f < 4; f++) {
+                    const cx = f * 64;
+                    const cy = row * 64;
+                    ctx.save();
+                    ctx.translate(cx + 32, cy + 42);
+                    renderer.draw(ctx, {
+                        direction: dir,
+                        animation: anim,
+                        frame: f,
+                        scale: 1.0,
+                        showShadow: true
+                    });
+                    ctx.restore();
+                }
+                row++;
+            }
+        }
+
+        // Also send to dev endpoint
+        try {
+            fetch('/api/dev/save-pet-asset', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: 'tfm_mouse_spritesheet.png',
+                    base64: c.toDataURL('image/png')
+                })
+            });
+        } catch(e){}
+    </script>
+</body>
+</html>

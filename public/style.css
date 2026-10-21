@@ -1,0 +1,4749 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+* {
+    box-sizing: border-box;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+html {
+    overflow-x: hidden !important;
+    width: 100%;
+    max-width: 100vw;
+}
+
+body { 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    background: radial-gradient(circle at 50% 20%, #1e293b 0%, #0f172a 100%); 
+    margin: 0; 
+    padding-bottom: 25px;
+    min-height: 100vh;
+    width: 100%;
+    max-width: 100vw;
+    color: #f8fafc;
+    overflow-x: hidden !important;
+}
+
+/* 1. ÜST MENÜ */
+.top-nav {
+    position: relative;
+    margin: 12px auto 14px auto;
+    z-index: 999;
+    display: flex;
+    gap: 8px;
+    background: rgba(15, 23, 42, 0.85);
+    padding: 8px 14px;
+    border-radius: 14px;
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    max-width: 1000px;
+    contain: layout style;
+    will-change: transform;
+}
+
+.nav-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 13px;
+    color: white;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.nav-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.nav-btn:active {
+    transform: translateY(0);
+}
+
+/* MEKANLAR AÇILIR MENÜSÜ */
+.places-dropdown-wrapper {
+    position: relative;
+    display: inline-block;
+}
+.place-menu-item {
+    width: 100%;
+    padding: 9px 14px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #f1f5f9;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.15s ease;
+}
+.place-menu-item:hover {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    transform: translateX(4px);
+}
+
+.emoji-quick-btn {
+    background: rgba(255, 255, 255, 0.12);
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 3px 6px;
+    transition: transform 0.15s, background 0.15s;
+    line-height: 1;
+}
+
+.emoji-quick-btn:hover {
+    transform: scale(1.25);
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.btn-street { background: linear-gradient(135deg, #10b981, #059669); }
+.btn-cafe { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.btn-beach { background: linear-gradient(135deg, #0284c7, #0369a1); }
+.btn-chat { background: linear-gradient(135deg, #f59e0b, #d97706); }
+
+/* 2. OYUN CANVAS */
+#gameCanvas { 
+    width: 800px;
+    max-width: 96vw;
+    height: auto;
+    aspect-ratio: 800 / 500;
+    display: block;
+    margin: 12px auto 0 auto;
+    border: 4px solid #334155; 
+    border-radius: 16px; 
+    touch-action: none;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    cursor: default;
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    image-rendering: auto;
+    transition: width 0.3s ease, aspect-ratio 0.3s ease;
+}
+
+#gameCanvas.wide-screen {
+    width: 1000px;
+    max-width: 96vw;
+    aspect-ratio: 1000 / 625;
+}
+
+/* Modal Pop-In & Fade Animations */
+@keyframes modalPopIn {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -48%) scale(0.96);
+    }
+    100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes overlayFadeIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.96);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* 3. MODALLAR VE PENCERELER */
+#gameModal {
+    display: none; 
+    position: fixed; 
+    top: 50%; 
+    left: 50%; 
+    transform: translate(-50%, -50%);
+    width: 96vw; 
+    max-width: 1020px; 
+    max-height: 96vh;
+    background: rgba(15, 23, 42, 0.97); 
+    border-radius: 14px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.15); 
+    padding: 6px 12px 10px 12px; 
+    text-align: center; 
+    border: 2px solid #38bdf8; 
+    z-index: 2000;
+    color: white;
+    overflow-y: auto;
+    overflow-x: hidden !important;
+    backdrop-filter: blur(16px);
+    box-sizing: border-box;
+    flex-direction: column;
+    contain: layout style;
+}
+
+#gameModal[style*="display: flex"],
+#gameModal[style*="display: block"] {
+    animation: modalPopIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#settingsModal > div,
+#wardrobeModal > div,
+#voidHandVoteModal > div,
+#leaderboardModal > div,
+#dailyQuestsModal > div,
+#reconnectPromptModal > div,
+#xoxModalContent,
+#amiralBattiModalContent {
+    animation: overlayFadeIn 0.16s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    will-change: transform, opacity;
+}
+
+/* En Üstte Bütünleşik Taşıma & Kontrol Başlığı */
+#modalHeader, .modal-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: 8px;
+    padding: 4px 10px;
+    margin: -2px -6px 6px -6px;
+    cursor: move;
+    user-select: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+    min-height: 28px;
+    box-sizing: border-box;
+}
+
+.modal-header-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+    flex: 1;
+    min-width: 0;
+}
+
+.modal-title-text {
+    font-size: 11.5px;
+    font-weight: 800;
+    color: #38bdf8;
+    text-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+    white-space: nowrap;
+}
+
+.modal-header-separator {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 10px;
+}
+
+#modalStatus, .modal-status-text { 
+    font-size: 11px; 
+    font-weight: 700; 
+    color: #facc15; 
+    text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-bottom: 0;
+}
+
+.modal-header-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: 0.3px;
+    cursor: move;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.modal-header-center .drag-icon {
+    font-size: 13px;
+    color: #38bdf8;
+}
+
+.modal-header-right {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* 4'te 1 Dikey Boyutta Kompakt Kapat / Ayrıl Butonu */
+.modal-compact-close-btn {
+    padding: 2px 12px;
+    height: 24px;
+    line-height: 20px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-compact-close-btn:hover {
+    background: linear-gradient(135deg, #f87171, #ef4444);
+    transform: scale(1.04);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+}
+
+.modal-compact-close-btn:active {
+    transform: scale(0.97);
+}
+
+#errorToast { 
+    color: white; 
+    background: linear-gradient(135deg, #ef4444, #dc2626); 
+    font-weight: 700; 
+    padding: 8px 16px; 
+    border-radius: 8px; 
+    display: none; 
+    margin-bottom: 12px;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+}
+
+/* Acil Süre Sayacı Nabız Uyarısı */
+.timer-urgent-pulse {
+    animation: timerUrgentPulse 0.5s infinite alternate ease-in-out !important;
+}
+
+@keyframes timerUrgentPulse {
+    from { opacity: 0.8; filter: drop-shadow(0 0 2px #ef4444); }
+    to { opacity: 1; filter: drop-shadow(0 0 12px #ef4444) drop-shadow(0 0 20px #f87171); }
+}
+
+/* Gösterge Bildirim Afişi (Toast) */
+.gosterge-reveal-banner {
+    position: fixed;
+    top: 50px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-25px);
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.96), rgba(217, 119, 6, 0.96));
+    color: white;
+    padding: 10px 24px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 14px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 25px rgba(245, 158, 11, 0.8);
+    border: 2px solid #fde047;
+    z-index: 3500;
+    opacity: 0;
+    transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    pointer-events: none;
+}
+
+.gosterge-reveal-banner.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Zafer Konfeti Tuvali */
+#victoryConfettiCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 3000;
+    display: none;
+}
+
+/* Zafer Kutlama Modalı */
+.victory-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3200;
+    animation: fadeInVictory 0.4s ease;
+}
+
+@keyframes fadeInVictory {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.victory-card {
+    background: linear-gradient(145deg, #1e293b, #0f172a);
+    border: 3px solid #facc15;
+    box-shadow: 0 0 50px rgba(250, 204, 21, 0.5), 0 20px 40px rgba(0,0,0,0.8);
+    border-radius: 20px;
+    padding: 24px 32px;
+    text-align: center;
+    max-width: 480px;
+    width: 90%;
+    animation: zoomInVictory 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    color: white;
+}
+
+@keyframes zoomInVictory {
+    from { transform: scale(0.6); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* 4. BATAK ALANI & İSKAMBİL KARTLARI */
+#batakArea { 
+    display: none; 
+    margin-bottom: 15px; 
+    padding: 18px; 
+    background: radial-gradient(ellipse at center, #1b4d3e 0%, #0d2b22 100%); 
+    border-radius: 20px; 
+    border: 8px solid #5c3a21;
+    box-shadow: inset 0 0 35px rgba(0,0,0,0.8), 0 10px 25px rgba(0,0,0,0.5);
+}
+
+#batakScoreboard {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+#tableCards { 
+    min-height: 100px; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    gap: 15px; 
+    margin: 15px 0 20px 0; 
+    background: rgba(0, 0, 0, 0.25); 
+    border-radius: 14px;
+    padding: 12px;
+    border: 1px dashed rgba(255, 255, 255, 0.15);
+}
+
+#playerHand { 
+    display: flex; 
+    flex-wrap: wrap; 
+    justify-content: center; 
+    gap: 8px; 
+    padding: 10px;
+}
+
+/* GERÇEKÇİ İSKAMBİL KARTI TASARIMI (+%10 Kart Boyutu, +%15 Sembol Boyutu) */
+.card { 
+    width: 53px; 
+    height: 79px; 
+    background: linear-gradient(135deg, #ffffff 0%, #f1f2f6 100%);
+    border-radius: 7px; 
+    position: relative;
+    font-weight: 800; 
+    cursor: pointer; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.32), 0 1px 2px rgba(0,0,0,0.2); 
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    user-select: none;
+    border: 1px solid #dcdde1;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.card:hover { 
+    transform: translateY(-12px) scale(1.08); 
+    box-shadow: 0 12px 20px rgba(0,0,0,0.4), 0 0 12px rgba(255, 215, 0, 0.8);
+    z-index: 50;
+    border-color: #f1c40f;
+}
+
+.card .top-index {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    font-size: 11px;
+    line-height: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 14px;
+}
+
+.card .top-index span:first-child {
+    font-size: 11px;
+    line-height: 1;
+    margin-bottom: 1.5px;
+}
+
+.card .top-index span:last-child {
+    font-size: 12px;
+    line-height: 1;
+}
+
+.card .center-pip {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -53%);
+    font-size: 24px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    pointer-events: none;
+}
+
+.card .bot-index {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    font-size: 11px;
+    line-height: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 14px;
+    transform: rotate(180deg);
+}
+
+.card .bot-index span:first-child {
+    font-size: 11px;
+    line-height: 1;
+    margin-bottom: 1.5px;
+}
+
+.card .bot-index span:last-child {
+    font-size: 12px;
+    line-height: 1;
+}
+
+.card.red { color: #dc2626; }
+.card.black { color: #1e293b; }
+.card.disabled { 
+    opacity: 0.45; 
+    pointer-events: none; 
+    filter: grayscale(40%);
+}
+
+/* GLOBAL JACKPOT TOAST STYLING */
+.global-jackpot-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 99999;
+    min-width: 290px;
+    max-width: 360px;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.97) 0%, rgba(30, 41, 59, 0.98) 100%);
+    border: 2px solid #facc15;
+    border-radius: 16px;
+    padding: 14px 18px;
+    color: white;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 25px rgba(250, 204, 21, 0.45);
+    backdrop-filter: blur(16px);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    user-select: none;
+    pointer-events: none;
+    animation: jackpotToastIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.global-jackpot-toast.toast-fadeout {
+    animation: jackpotToastOut 0.5s ease forwards;
+}
+
+@keyframes jackpotToastIn {
+    0% { transform: translateY(40px) scale(0.85); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes jackpotToastOut {
+    0% { transform: translateY(0) scale(1); opacity: 1; }
+    100% { transform: translateY(20px) scale(0.9); opacity: 0; }
+}
+
+.jackpot-toast-icon {
+    font-size: 34px;
+    animation: jackpotIconPulse 1s infinite alternate;
+}
+
+@keyframes jackpotIconPulse {
+    0% { transform: scale(1); filter: drop-shadow(0 0 4px #facc15); }
+    100% { transform: scale(1.15) rotate(6deg); filter: drop-shadow(0 0 14px #eab308); }
+}
+
+.jackpot-toast-content {
+    flex: 1;
+}
+
+.jackpot-toast-badge {
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    color: #facc15;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+
+.jackpot-toast-title {
+    font-size: 14.5px;
+    font-weight: 900;
+    color: #ffffff;
+    line-height: 1.25;
+}
+
+.jackpot-toast-amount {
+    font-size: 12px;
+    color: #4ade80;
+    font-weight: 800;
+    margin-top: 3px;
+}
+
+/* 5. BİLLARDO ALANI & 3D TOPLAR */
+#billiardArea { 
+    display: none; 
+    margin-bottom: 15px; 
+    padding: 16px; 
+    background: #0f172a; 
+    border-radius: 16px; 
+    border: 2px solid #334155; 
+}
+
+#billiardTable { 
+    width: 600px; 
+    height: 300px; 
+    margin: 0 auto; 
+    background: radial-gradient(ellipse at center, #0a8747 0%, #066333 65%, #033f20 100%); 
+    position: relative; 
+    border-radius: 16px; 
+    border: 16px solid #3d200a; 
+    outline: 2px solid #5a3212;
+    box-shadow: inset 0 0 24px rgba(0,0,0,0.85), 0 16px 36px rgba(0,0,0,0.7), inset 0 0 2px rgba(255,255,255,0.1);
+    user-select: none; 
+    touch-action: none; 
+    cursor: crosshair; 
+}
+
+.pocket { 
+    width: 34px; 
+    height: 34px; 
+    background: radial-gradient(circle, #050505 50%, #151515 90%, #2a2a2a 100%); 
+    border-radius: 50%; 
+    position: absolute; 
+    z-index: 1; 
+    box-shadow: inset 3px 3px 8px rgba(0,0,0,0.95), 0 0 4px rgba(0,0,0,0.6); 
+    border: 1px solid rgba(255,255,255,0.06);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.pocket.target-glow {
+    box-shadow: 0 0 16px #22c55e, inset 0 0 10px #22c55e !important;
+    border-color: #4ade80 !important;
+    animation: pocketTargetPulse 0.7s infinite alternate ease-in-out;
+}
+@keyframes pocketTargetPulse {
+    0% { box-shadow: 0 0 8px #22c55e, inset 0 0 4px #22c55e; }
+    100% { box-shadow: 0 0 20px #4ade80, inset 0 0 12px #4ade80; }
+}
+
+/* Sedefli Elmas Nişan Noktaları (Rail Diamond Sights) */
+.billiard-diamond {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #fef08a;
+    transform: rotate(45deg);
+    border-radius: 1px;
+    box-shadow: 0 0 4px rgba(250, 204, 21, 0.8), inset 0 0 2px #fff;
+    pointer-events: none;
+    z-index: 5;
+}
+
+/* 3D GERÇEKÇİ TOP STİLLERİ */
+.ball { 
+    width: 18px; 
+    height: 18px; 
+    border-radius: 50%; 
+    position: absolute; 
+    transform: translate(-50%, -50%); 
+    z-index: 2; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 2px 3px 6px rgba(0,0,0,0.65), inset -1px -1px 3px rgba(0,0,0,0.4);
+}
+
+.ball::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 3px;
+    width: 6px;
+    height: 4px;
+    background: radial-gradient(ellipse at center, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0) 80%);
+    border-radius: 50%;
+    transform: rotate(-30deg);
+    pointer-events: none;
+}
+
+.ball.solid {
+    background: radial-gradient(circle at 35% 35%, #ff7675 0%, #d63031 65%, #7e1617 100%);
+}
+
+.ball.stripe {
+    background: linear-gradient(to bottom, #f5f6fa 20%, #f39c12 20%, #d35400 80%, #f5f6fa 80%);
+    border: 0.5px solid rgba(0,0,0,0.2);
+}
+
+.ball.black {
+    background: radial-gradient(circle at 35% 35%, #636e72 0%, #2d3436 65%, #000000 100%);
+}
+
+.ball.white {
+    background: radial-gradient(circle at 35% 35%, #ffffff 0%, #dfe6e9 70%, #b2bec3 100%);
+    box-shadow: 0 0 6px rgba(255,255,255,0.7), 2px 3px 6px rgba(0,0,0,0.6);
+}
+
+/* Beyaz top kırmızı turnuva noktası (Measle Dot) */
+.ball.white::before {
+    content: '';
+    position: absolute;
+    width: 3.5px;
+    height: 3.5px;
+    background: #ef4444;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 2px rgba(239, 68, 68, 0.8);
+    pointer-events: none;
+}
+
+.ball-num {
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
+    font-size: 6px;
+    font-weight: 800;
+    color: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Mini Skor Panosu Top Rozetleri (Ball Pips) */
+.billiard-pip {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 7.5px;
+    font-weight: 900;
+    color: #ffffff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.6);
+    flex-shrink: 0;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.billiard-pip.solid {
+    background: radial-gradient(circle at 35% 35%, #ff7675 0%, #d63031 65%, #7e1617 100%);
+}
+.billiard-pip.stripe {
+    background: linear-gradient(to bottom, #ffffff 20%, #f39c12 20%, #d35400 80%, #ffffff 80%);
+    color: #0f172a;
+    border: 0.5px solid rgba(0,0,0,0.25);
+}
+.billiard-pip.potted {
+    opacity: 0.16;
+    filter: grayscale(1);
+    transform: scale(0.85);
+    box-shadow: none;
+}
+
+/* 6. SABİT VE SÜRÜKLENEBİLİR CHAT PANELİ */
+#sideChatContainer {
+    position: fixed;
+    top: 65px;
+    right: 20px;
+    width: 290px;
+    height: 330px;
+    max-width: calc(100vw - 30px);
+    background: rgba(15, 23, 42, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 14px;
+    z-index: 40000;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    box-shadow: 0 16px 36px rgba(0,0,0,0.7), 0 0 20px rgba(13, 148, 136, 0.2);
+    backdrop-filter: blur(14px);
+    transition: height 0.2s ease, box-shadow 0.2s ease;
+}
+
+#sideChatContainer.chat-minimized {
+    height: auto !important;
+    min-height: auto !important;
+    padding-bottom: 8px !important;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+}
+
+#chatHeader {
+    cursor: move;
+    background: linear-gradient(135deg, #0d9488, #0f766e);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 12px;
+    margin-bottom: 6px;
+    letter-spacing: 0.3px;
+    user-select: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#sideChatContainer.chat-minimized #chatHeader {
+    margin-bottom: 0 !important;
+}
+
+#sideChatContainer .chat-header-btn {
+    padding: 2px 7px;
+    background: rgba(255, 255, 255, 0.18);
+    border: none;
+    border-radius: 5px;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1.2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+#sideChatContainer .chat-header-btn:hover {
+    background: rgba(255, 255, 255, 0.32);
+    transform: scale(1.1);
+}
+
+#sideChatContainer .chat-header-btn.btn-close {
+    background: rgba(239, 68, 68, 0.4);
+    border: 1px solid rgba(239, 68, 68, 0.5);
+}
+
+#sideChatContainer .chat-header-btn.btn-close:hover {
+    background: rgba(239, 68, 68, 0.85);
+    border-color: #ef4444;
+}
+
+#chatBody {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+#sideChatContainer.chat-minimized #chatBody {
+    display: none !important;
+}
+
+#chatHistory {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 8px;
+    padding: 8px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 8px;
+    color: #f1f5f9;
+    font-size: 13px;
+    word-break: break-word;
+}
+
+#chatHistory .chat-msg-row {
+    padding: 4px 7px;
+    border-radius: 6px;
+    line-height: 1.35;
+    font-size: 12px;
+    transition: background 0.15s ease;
+}
+
+#chatHistory .chat-msg-all {
+    background: rgba(245, 158, 11, 0.12);
+    border-left: 3px solid #f59e0b;
+}
+
+#chatHistory .chat-msg-room {
+    background: rgba(255, 255, 255, 0.06);
+    border-left: 3px solid #14b8a6;
+}
+
+.chat-tab-btn {
+    flex: 1;
+    padding: 5px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    background: transparent;
+    color: #94a3b8;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: all 0.15s ease;
+    position: relative;
+    user-select: none;
+}
+
+.chat-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #f1f5f9;
+}
+
+.chat-tab-btn.active {
+    background: rgba(15, 23, 42, 0.85);
+    color: #ffffff;
+    border: 1px solid rgba(45, 212, 191, 0.45);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.chat-tab-dot {
+    width: 6px;
+    height: 6px;
+    background: #ef4444;
+    border-radius: 50%;
+    display: inline-block;
+    animation: pulse 1s infinite;
+}
+
+#sideChatContainer input {
+    flex: 1;
+    padding: 8px 12px;
+    background: rgba(30, 41, 59, 0.9);
+    color: white;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    outline: none;
+    font-size: 12.5px;
+}
+
+#sideChatContainer button#sideChatSendBtn {
+    padding: 8px 13px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 12.5px;
+    transition: transform 0.1s;
+}
+
+#sideChatContainer button#sideChatSendBtn:hover {
+    transform: scale(1.03);
+}
+
+/* 7. MOBİL KONTROLLER */
+.control-btn { 
+    width: 60px; 
+    height: 60px; 
+    font-size: 24px; 
+    background: rgba(30, 41, 59, 0.9); 
+    color: white; 
+    border: 1px solid rgba(255,255,255,0.15); 
+    border-radius: 12px; 
+    cursor: pointer; 
+    user-select: none; 
+    backdrop-filter: blur(8px);
+}
+.control-btn:active { 
+    background: #2563eb; 
+}
+
+/* 8. PARA & BAKİYE GÖSTERGESİ */
+.money-badge {
+    background: linear-gradient(135deg, #10b981, #047857);
+    color: #ffffff;
+    font-weight: 800;
+    padding: 8px 16px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    letter-spacing: 0.3px;
+}
+
+/* 9. TAVLA ALANI & TAHTA TASARIMI */
+#tavlaArea {
+    display: none;
+    margin-bottom: 15px;
+    padding: 16px;
+    background: #1e1b18;
+    border-radius: 16px;
+    border: 2px solid #5c3818;
+}
+
+.tavla-container {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: stretch;
+    background: #2b1708;
+    padding: 10px;
+    border-radius: 14px;
+    border: 7px solid #190c04;
+    box-shadow: inset 0 0 25px rgba(0,0,0,0.85), 0 12px 30px rgba(0,0,0,0.7);
+    user-select: none;
+}
+
+/* 1. KIRIK TAŞLAR (BAR) */
+.tavla-bar {
+    width: 70px;
+    background: #1a0e05;
+    border-radius: 8px;
+    border: 2px solid #4a280e;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 6px 4px;
+    cursor: pointer;
+    user-select: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.tavla-bar:hover {
+    border-color: #facc15;
+}
+.bar-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 120px;
+    border-radius: 6px;
+    padding: 4px;
+    transition: background 0.2s;
+}
+.bar-section.selected-point {
+    background: rgba(250, 204, 21, 0.15);
+    box-shadow: 0 0 12px 3px #facc15 !important;
+}
+.bar-sec-title {
+    font-size: 10px;
+    font-weight: 800;
+    color: #e2e8f0;
+    text-align: center;
+    margin: 3px 0;
+}
+.bar-divider {
+    font-size: 10px;
+    font-weight: 900;
+    color: #ca8a04;
+    letter-spacing: 1px;
+    text-align: center;
+    padding: 4px 0;
+    border-top: 1px solid #4a280e;
+    border-bottom: 1px solid #4a280e;
+    background: rgba(0,0,0,0.4);
+    border-radius: 3px;
+}
+.bar-checkers {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.bar-checkers .tavla-checker {
+    margin-bottom: -5px;
+}
+
+/* 2. TAHTA ALANI (24 KAPI) */
+.tavla-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    background: #45240c;
+    padding: 6px;
+    border-radius: 8px;
+    border: 2px solid #5a3010;
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.6);
+}
+
+.tavla-row {
+    display: flex;
+    gap: 0;
+    align-items: stretch;
+}
+
+.tavla-quadrant {
+    display: flex;
+    gap: 3px;
+}
+
+.tavla-vertical-divider {
+    width: 14px;
+    margin: 0 4px;
+    background: linear-gradient(90deg, #1f0f04 0%, #3a1c07 50%, #1f0f04 100%);
+    border-left: 1.5px solid #78350f;
+    border-right: 1.5px solid #78350f;
+    border-radius: 2px;
+    box-shadow: inset 0 0 6px rgba(0,0,0,0.8);
+}
+
+.tavla-middle-divider {
+    height: 26px;
+    background: linear-gradient(90deg, #1f0f04 0%, #3a1c07 50%, #1f0f04 100%);
+    border-top: 1.5px solid #78350f;
+    border-bottom: 1.5px solid #78350f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 2px 0;
+    border-radius: 2px;
+}
+.tavla-middle-divider .middle-line {
+    width: 95%;
+    height: 1.5px;
+    background: linear-gradient(90deg, transparent, rgba(250, 204, 21, 0.4), transparent);
+}
+
+/* KAPILAR (ÜÇGENLER) */
+.tavla-point {
+    width: 44px;
+    height: 145px;
+    position: relative;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: filter 0.15s, transform 0.1s;
+    user-select: none;
+    box-sizing: border-box;
+}
+
+.tavla-point:hover {
+    filter: brightness(1.22);
+}
+
+.top-point {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding-top: 3px;
+}
+
+.bot-point {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    padding-bottom: 3px;
+}
+
+.tri-dark {
+    background: linear-gradient(to bottom, #7c2d12 0%, #451a03 100%);
+}
+.tri-light {
+    background: linear-gradient(to bottom, #fde68a 0%, #d97706 100%);
+}
+.bot-row .tri-dark {
+    background: linear-gradient(to top, #7c2d12 0%, #451a03 100%);
+}
+.bot-row .tri-light {
+    background: linear-gradient(to top, #fde68a 0%, #d97706 100%);
+}
+
+/* Ev Kapıları (Home Board) İnce Vurgusu */
+.home-point-top {
+    border-top: 2px solid rgba(250, 204, 21, 0.5);
+}
+.home-point-bot {
+    border-bottom: 2px solid rgba(250, 204, 21, 0.5);
+}
+
+.tavla-point.selected-point {
+    box-shadow: 0 0 14px 4px #facc15 !important;
+    transform: scale(1.03);
+    z-index: 20;
+}
+
+.tavla-point.target-point {
+    box-shadow: 0 0 14px 4px #22c55e !important;
+    animation: pulseTarget 1s infinite alternate;
+    z-index: 15;
+}
+
+@keyframes pulseTarget {
+    from { filter: brightness(1.15); }
+    to { filter: brightness(1.55); }
+}
+
+.point-num {
+    font-size: 9.5px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.75);
+    pointer-events: none;
+    line-height: 1;
+}
+.point-num-top {
+    margin-bottom: 2px;
+}
+.point-num-bot {
+    margin-top: 2px;
+}
+
+/* TAŞLARIN İSTİF DÜZENİ (ASLA ÜST ÜSTE TAŞMAZ) */
+.point-checkers-top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.point-checkers-top .tavla-checker {
+    margin-bottom: -5px; /* Sıkı 3D taş dizilimi */
+}
+
+.point-checkers-bot {
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+}
+.point-checkers-bot .tavla-checker {
+    margin-top: -5px; /* Sıkı 3D taş dizilimi */
+}
+
+/* 3. TAVLA PULU (CHECKER) */
+.tavla-checker {
+    width: 34px;
+    height: 24px;
+    border-radius: 50%;
+    position: relative;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.6), inset 0 2px 3px rgba(255,255,255,0.5);
+    cursor: pointer;
+    transition: transform 0.12s;
+    box-sizing: border-box;
+}
+
+.checker-white {
+    background: radial-gradient(circle at 35% 35%, #ffffff 0%, #e2e8f0 60%, #94a3b8 100%);
+    border: 2px solid #cbd5e1;
+}
+
+.checker-black {
+    background: radial-gradient(circle at 35% 35%, #475569 0%, #1e293b 60%, #0f172a 100%);
+    border: 2px solid #334155;
+}
+
+.checker-selected {
+    transform: scale(1.16);
+    box-shadow: 0 0 14px 4px #facc15 !important;
+}
+
+.checker-count-badge {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 11px;
+    font-weight: 900;
+    color: #facc15;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+}
+
+/* 4. Y EKSENİNDE SİMETRİK TOPLAMA BÖLMELERİ (BORNE OFF) */
+.tavla-borne-area {
+    width: 95px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #1a0e05;
+    border-radius: 8px;
+    border: 2px solid #4a280e;
+    padding: 6px 4px;
+    box-sizing: border-box;
+}
+
+.tavla-borne-box {
+    background: #271406;
+    border: 1.5px solid #5a3010;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 4px;
+    min-height: 125px;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+}
+.tavla-borne-box:hover {
+    border-color: #facc15;
+}
+.tavla-borne-box.target-point {
+    border-color: #22c55e;
+    box-shadow: 0 0 14px 4px #22c55e;
+    animation: pulseTarget 1s infinite alternate;
+}
+
+.borne-divider {
+    height: 1px;
+    background: #4a280e;
+    margin: 4px 0;
+}
+
+.borne-box-title {
+    font-size: 10px;
+    font-weight: 800;
+    color: #e2e8f0;
+    text-align: center;
+    margin-bottom: 4px;
+}
+.borne-box-count {
+    font-size: 12px;
+    color: #facc15;
+    margin-bottom: 6px;
+}
+.borne-checkers-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 30px;
+}
+.borne-checker-chip {
+    width: 28px;
+    height: 6px;
+    border-radius: 3px;
+    margin-top: -2px;
+}
+.borne-checker-chip.checker-white {
+    background: #e2e8f0;
+    border: 1px solid #cbd5e1;
+}
+.borne-checker-chip.checker-black {
+    background: #1e293b;
+    border: 1px solid #475569;
+}
+.empty-borne-hint {
+    font-size: 10px;
+    color: #64748b;
+    font-style: italic;
+}
+.collect-btn-badge {
+    margin-top: 6px;
+    background: #22c55e;
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 6px;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(34,197,94,0.4);
+}
+
+/* 3D ZAR TASARIMI */
+.dice-box {
+    width: 36px;
+    height: 36px;
+    background: #ffffff;
+    border-radius: 7px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 2px 3px rgba(255,255,255,0.8);
+    position: relative;
+    border: 1px solid #cbd5e1;
+    display: inline-block;
+}
+
+.dice-box .pip {
+    position: absolute;
+    width: 6.5px;
+    height: 6.5px;
+    background: #dc2626;
+    border-radius: 50%;
+}
+.dice-box .pip.center { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+.dice-box .pip.top-left { top: 6px; left: 6px; }
+.dice-box .pip.top-right { top: 6px; right: 6px; }
+.dice-box .pip.mid-left { top: 50%; left: 6px; transform: translateY(-50%); }
+.dice-box .pip.mid-right { top: 50%; right: 6px; transform: translateY(-50%); }
+.dice-box .pip.bot-left { bottom: 6px; left: 6px; }
+.dice-box .pip.bot-right { bottom: 6px; right: 6px; }
+
+/* 10. GARDIROR (AVATAR DOLABI) */
+.wardrobe-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+    margin: 15px 0;
+}
+.wardrobe-item-card {
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 12px 8px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    transition: transform 0.15s, border-color 0.15s;
+}
+.wardrobe-item-card:hover {
+    transform: translateY(-3px);
+    border-color: #38bdf8;
+}
+.wardrobe-item-card.equipped {
+    border-color: #38bdf8;
+    background: rgba(56, 189, 248, 0.2);
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+}
+
+.wardrobe-gender-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.wardrobe-gender-btn {
+    padding: 5px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    background: rgba(15, 23, 42, 0.7);
+    color: #94a3b8;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 11.5px;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.wardrobe-gender-btn:hover {
+    color: #f8fafc;
+    border-color: rgba(255, 255, 255, 0.35);
+    transform: translateY(-1px);
+}
+
+.wardrobe-gender-btn.active {
+    background: linear-gradient(135deg, #ec4899, #db2777);
+    color: white;
+    border-color: #f472b6;
+    box-shadow: 0 2px 10px rgba(236, 72, 153, 0.45);
+}
+
+.wardrobe-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.wardrobe-tab-btn {
+    padding: 7px 14px;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    background: rgba(30, 41, 59, 0.7);
+    color: #94a3b8;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.wardrobe-tab-btn.active {
+    background: linear-gradient(135deg, #ec4899, #db2777);
+    color: white;
+    border-color: #f472b6;
+    box-shadow: 0 4px 12px rgba(236,72,153,0.35);
+}
+
+.avatar-stage-box {
+    background: radial-gradient(circle at 50% 40%, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+    border: 2px solid rgba(56, 189, 248, 0.35);
+    border-radius: 16px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.5), 0 4px 15px rgba(0,0,0,0.4);
+}
+
+/* 11. BİLLARDO FALSO (SPIN) KONTROL PANELİ */
+.spin-controller {
+    width: 60px;
+    height: 60px;
+    background: radial-gradient(circle at 35% 35%, #ffffff 0%, #e2e8f0 60%, #94a3b8 100%);
+    border-radius: 50%;
+    border: 2px solid #64748b;
+    position: relative;
+    cursor: crosshair;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.4);
+}
+.spin-marker {
+    width: 10px;
+    height: 10px;
+    background: #dc2626;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    box-shadow: 0 0 6px #dc2626;
+}
+
+/* 12. BALIK TUTMA VE KAZANÇ ANİMASYONLARI */
+@keyframes popIn {
+    0% { transform: scale(0.65); opacity: 0; }
+    70% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes floatBob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+
+.fishing-float-anim {
+    animation: floatBob 1.5s ease-in-out infinite;
+}
+
+/* 13. SOSYAL ETKİLEŞİM, EMLAK VE MOBİLYA STILLERI */
+.social-toast-popup {
+    animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.3s ease;
+}
+
+.gift-item-card:hover {
+    border-color: #ec4899 !important;
+    background: rgba(30, 41, 59, 1) !important;
+    transform: translateY(-2px);
+    transition: all 0.2s;
+}
+
+.real-estate-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+    transition: all 0.2s;
+}
+
+.furniture-card:hover {
+    border-color: #38bdf8 !important;
+    transform: translateY(-2px);
+    transition: all 0.2s;
+}
+
+@keyframes pulseBadge {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 6px #ef4444; }
+    50% { transform: scale(1.15); box-shadow: 0 0 14px #ef4444; }
+}
+
+#friendRequestsBadge {
+    animation: pulseBadge 1.4s infinite ease-in-out;
+}
+
+/* ==========================================================
+   📱 MOBİL EKRAN ANALOG SANAL JOYSTICK (360° VIRTUAL JOYSTICK)
+   ========================================================== */
+.mobile-joystick-container, .mobile-dpad-container {
+    position: fixed;
+    /* Oyun ekranına yakın, telefonun taa en altında kaybolmayan ergonomik konum */
+    bottom: clamp(65px, 14vh, 160px);
+    left: clamp(16px, 4vw, 40px);
+    z-index: 12000;
+    width: 130px;
+    height: 130px;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    contain: layout paint;
+    will-change: transform;
+}
+
+.mobile-joystick-base {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(30, 41, 59, 0.72) 0%, rgba(15, 23, 42, 0.92) 100%);
+    border: 2px solid rgba(56, 189, 248, 0.45);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.55), inset 0 0 15px rgba(56, 189, 248, 0.2);
+    backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+    user-select: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.mobile-joystick-base.active {
+    border-color: #38bdf8;
+    box-shadow: 0 0 22px rgba(56, 189, 248, 0.55), inset 0 0 20px rgba(56, 189, 248, 0.35);
+}
+
+.joystick-ring {
+    position: absolute;
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    border: 1.5px dashed rgba(255, 255, 255, 0.22);
+    pointer-events: none;
+}
+
+.mobile-joystick-knob {
+    position: absolute;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #38bdf8, #0284c7);
+    border: 2px solid #bae6fd;
+    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    will-change: transform;
+}
+
+.mobile-joystick-knob.returning {
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.knob-inner-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 6px white;
+}
+
+.joy-dir {
+    position: absolute;
+    font-size: 10px;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.4);
+    pointer-events: none;
+    user-select: none;
+}
+.joy-up { top: 6px; }
+.joy-down { bottom: 6px; }
+.joy-left { left: 8px; }
+.joy-right { right: 8px; }
+
+#mobileActionBtn {
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+#mobileActionBtn:active {
+    transform: scale(0.92);
+    box-shadow: 0 0 20px #f59e0b;
+}
+
+/* ==========================================================
+   🀄 101 OKEY 3D FİLDİŞİ/MELAMİN TAŞLAR VE KIRAATHANE MASASI
+   ========================================================== */
+.okey-tile {
+    width: 38px;
+    height: 54px;
+    background: linear-gradient(155deg, #ffffff 0%, #fefcf3 40%, #faecd5 100%);
+    border: 1px solid #d4c5a9;
+    border-right: 3px solid #b8a280;
+    border-bottom: 5px solid #9c8360;
+    border-radius: 7px;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 900;
+    font-size: 20px;
+    box-shadow: 0 4px 8px -1px rgba(0, 0, 0, 0.45), 0 2px 4px -1px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.95), inset 0 -2px 3px rgba(139, 107, 61, 0.25);
+    cursor: pointer;
+    transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.16s ease, border-color 0.16s ease;
+    user-select: none;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.okey-tile span {
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9), 0 -1px 0 rgba(0, 0, 0, 0.2);
+    display: inline-block;
+    line-height: 1;
+}
+
+.okey-tile:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 1px 1px #fff;
+}
+
+.okey-tile.selected {
+    transform: translateY(-12px) scale(1.05);
+    border: 2px solid #38bdf8;
+    border-bottom: 5px solid #0284c7;
+    box-shadow: 0 14px 22px rgba(0, 0, 0, 0.55), 0 0 18px rgba(56, 189, 248, 0.8), inset 0 1px 2px #fff;
+    z-index: 10;
+}
+
+/* Okey Taşı - Altın Taç ve Parıltı */
+.okey-tile.gold-border {
+    border: 2px solid #f59e0b;
+    border-bottom: 5px solid #b45309;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4), 0 0 16px rgba(250, 204, 21, 0.85), inset 0 0 8px rgba(250, 204, 21, 0.35);
+    animation: okeyGlow 2.5s infinite alternate;
+}
+
+@keyframes okeyGlow {
+    0% { box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4), 0 0 12px rgba(250, 204, 21, 0.65); }
+    100% { box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4), 0 0 22px rgba(250, 204, 21, 0.95); }
+}
+
+/* Desteden Yeni Çekilen Taş Vurgusu */
+.okey-tile.drawn-tile {
+    border: 2px solid #facc15 !important;
+    border-bottom: 5px solid #d97706 !important;
+    animation: drawnTilePulse 1.2s infinite alternate !important;
+    z-index: 5;
+}
+
+@keyframes drawnTilePulse {
+    0% {
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4), 0 0 10px rgba(250, 204, 21, 0.7), inset 0 0 6px rgba(250, 204, 21, 0.35);
+        transform: translateY(-2px);
+    }
+    100% {
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.5), 0 0 24px rgba(250, 204, 21, 1), 0 0 12px rgba(251, 191, 36, 0.85), inset 0 0 10px rgba(250, 204, 21, 0.55);
+        transform: translateY(-6px);
+    }
+}
+
+.tile-badge-drawn {
+    position: absolute;
+    top: -9px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #1c1917;
+    font-size: 8px;
+    font-weight: 900;
+    padding: 1px 5px;
+    border-radius: 4px;
+    border: 1px solid #fef08a;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6), 0 0 10px rgba(250, 204, 21, 0.85);
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+    z-index: 12;
+    pointer-events: none;
+}
+
+/* Geçerli Bir Per Oluşturan Taş Vurgusu (Kilitlenme yok, serbestçe bozulabilir) */
+.okey-tile.in-per {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45), 0 0 12px rgba(16, 185, 129, 0.65), inset 0 1px 1px #fff !important;
+    border-bottom: 5px solid #059669 !important;
+}
+
+.okey-tile.in-per::after {
+    content: "✓";
+    position: absolute;
+    bottom: 2px;
+    right: 3px;
+    font-size: 9px;
+    font-weight: 900;
+    color: #10b981;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+    pointer-events: none;
+    line-height: 1;
+}
+
+/* Geçerli Bir Çift Oluşturan Taş Vurgusu */
+.okey-tile.in-pair {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45), 0 0 12px rgba(245, 158, 11, 0.65), inset 0 1px 1px #fff !important;
+    border-bottom: 5px solid #d97706 !important;
+}
+
+.okey-tile.in-pair::after {
+    content: "👥";
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    font-size: 8px;
+    pointer-events: none;
+    line-height: 1;
+}
+
+/* Mini Taşlar (Masada Açılmış Perler ve Gösterge için) */
+.okey-tile.mini {
+    width: 29px;
+    height: 41px;
+    font-size: 14px;
+    border-right: 2px solid #b8a280;
+    border-bottom: 3px solid #9c8360;
+    border-radius: 5px;
+    cursor: default;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+}
+
+.okey-tile.mini:hover {
+    transform: none;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+}
+
+/* Otantik Taş Renkleri */
+.okey-tile.kirmizi { color: #dc2626; }
+.okey-tile.siyah { color: #0f172a; }
+.okey-tile.mavi { color: #0284c7; }
+.okey-tile.sari { color: #d97706; }
+.okey-tile.sahte { 
+    color: #7e22ce; 
+    text-shadow: 0 0 8px rgba(126, 34, 206, 0.5), 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* Deste Çekme Alanı (3D Katmanlı Deste Hissi) */
+.okey-draw-pile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(145deg, #fffdf8 0%, #f7ecd7 60%, #e2cead 100%);
+    border: 1px solid #c4b498;
+    border-radius: 8px;
+    padding: 6px 14px;
+    box-shadow: 2px 2px 0 #ab926e, 4px 4px 0 #8b6b3d, 6px 6px 0 #5c4424, 0 8px 18px rgba(0, 0, 0, 0.6);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    user-select: none;
+    position: relative;
+}
+
+.okey-draw-pile:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 2px 3px 0 #ab926e, 4px 6px 0 #8b6b3d, 6px 9px 0 #5c4424, 0 12px 22px rgba(0, 0, 0, 0.7);
+}
+
+.okey-draw-pile:active {
+    transform: translateY(2px);
+    box-shadow: 1px 1px 0 #ab926e, 2px 2px 0 #8b6b3d, 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* Masadaki 4 Köşe Atılan Taş Yuvaları ve 3x3 Masa Düzeni */
+.okey-table-felt {
+    background: radial-gradient(ellipse at center, #065f46 0%, #064e3b 60%, #022c22 100%);
+    border: 3px solid #78350f;
+    outline: 2px dashed rgba(250, 204, 21, 0.35);
+    outline-offset: -5px;
+    border-radius: 14px;
+    padding: 8px 10px;
+    box-shadow: inset 0 0 35px rgba(0,0,0,0.75), 0 6px 18px rgba(0,0,0,0.5);
+    margin-bottom: 8px;
+    min-height: 360px;
+    display: grid;
+    grid-template-columns: minmax(180px, 220px) 1fr minmax(180px, 220px);
+    grid-template-rows: auto 1fr auto;
+    gap: 8px;
+    box-sizing: border-box;
+    align-items: stretch;
+}
+
+/* 4 Köşedeki Atılan Taş Yuvaları */
+.okey-corner-slot {
+    background: linear-gradient(145deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.85));
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 4px 6px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0,0,0,0.3);
+    position: relative;
+    box-sizing: border-box;
+    min-height: 68px;
+}
+
+/* Sol-Alt Köşe: Istakanın Sol Üstü (Sol oyuncunun sana attığı taş) */
+.okey-corner-slot.bottom-left {
+    border: 2px dashed #38bdf8;
+    background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(12, 74, 110, 0.28));
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6), 0 0 14px rgba(56, 189, 248, 0.3);
+}
+
+/* Sağ-Alt Köşe: Istakanın Sağ Üstü (Senin sağdaki oyuncuya attığın taş) */
+.okey-corner-slot.bottom-right {
+    border: 2px dashed #f59e0b;
+    background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(120, 53, 15, 0.28));
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6), 0 0 14px rgba(245, 158, 11, 0.3);
+}
+
+/* Sol-Üst Köşe (Simetrik): Karşıdakinin solundakine attığı taş */
+.okey-corner-slot.top-left {
+    border: 1px dashed rgba(255, 255, 255, 0.22);
+}
+
+/* Sağ-Üst Köşe (Simetrik): Sağdakinin karşıdakine attığı taş */
+.okey-corner-slot.top-right {
+    border: 1px dashed rgba(255, 255, 255, 0.22);
+}
+
+.slot-label {
+    font-size: 8.5px;
+    font-weight: 900;
+    color: #94a3b8;
+    letter-spacing: 0.3px;
+    margin-bottom: 3px;
+    white-space: nowrap;
+}
+.slot-label.highlight-cyan { color: #38bdf8; }
+.slot-label.highlight-amber { color: #f59e0b; }
+
+.slot-tile-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 44px;
+    width: 100%;
+}
+
+.slot-empty {
+    color: #64748b;
+    font-size: 11px;
+    font-style: italic;
+}
+
+.take-discard-btn {
+    margin-top: 5px;
+    padding: 4px 8px;
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    color: white;
+    border: 1px solid #38bdf8;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 800;
+    cursor: pointer;
+    width: 100%;
+    box-shadow: 0 2px 6px rgba(56, 189, 248, 0.4);
+    transition: transform 0.15s, background 0.15s;
+}
+.take-discard-btn:hover {
+    transform: scale(1.03);
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
+}
+
+/* Masa Göbeği (SADECE Gösterge & 3D Deste) */
+.okey-center-deck-area {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.5) 0%, rgba(15, 23, 42, 0.15) 70%, transparent 100%);
+    border-radius: 12px;
+}
+
+.deck-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    background: linear-gradient(145deg, rgba(15, 23, 42, 0.88), rgba(30, 41, 59, 0.78));
+    border: 1px solid rgba(250, 204, 21, 0.3);
+    padding: 10px 20px;
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+
+.gosterge-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Oyuncu Per Açma Alanları (Herkes Kendi Önüne Açar) */
+.okey-player-zone {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 6px 8px;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
+    box-sizing: border-box;
+}
+
+.okey-player-zone.top-zone {
+    border-top: 2px solid rgba(56, 189, 248, 0.4);
+    min-height: 60px;
+}
+
+.okey-player-zone.bottom-zone {
+    border-bottom: 2px solid rgba(16, 185, 129, 0.5);
+    min-height: 60px;
+}
+
+.okey-player-zone.side-zone {
+    min-height: 140px;
+    max-height: 240px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.btn-ready-to-open {
+    animation: openButtonGlow 1.8s infinite ease-in-out !important;
+}
+
+@keyframes openButtonGlow {
+    0% { transform: scale(1); box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4); }
+    50% { transform: scale(1.06); box-shadow: 0 0 18px rgba(16, 185, 129, 0.95), 0 0 28px rgba(52, 211, 153, 0.7); }
+    100% { transform: scale(1); box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4); }
+}
+
+.okey-player-zone.left-zone {
+    border-left: 2px solid rgba(56, 189, 248, 0.4);
+}
+
+.okey-player-zone.right-zone {
+    border-right: 2px solid rgba(245, 158, 11, 0.4);
+}
+
+.zone-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 800;
+    color: #facc15;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.zone-badge {
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: white;
+}
+.zone-badge.opened {
+    background: linear-gradient(135deg, #059669, #10b981);
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+}
+.zone-badge.unopened {
+    background: #475569;
+    color: #cbd5e1;
+}
+
+.zone-pers-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    align-items: center;
+    min-height: 40px;
+}
+
+.zone-pers-col {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+}
+
+.zone-empty-text {
+    color: #94a3b8;
+    font-size: 11px;
+    font-style: italic;
+    padding: 6px 4px;
+}
+
+/* Gerçek Ceviz Kaplama 3D Istaka */
+.okey-rack-container {
+    background: linear-gradient(180deg, #522105 0%, #361402 35%, #220b01 70%, #150600 100%);
+    border: 3px solid #78350f;
+    border-top: 2px solid #9a3412;
+    border-bottom: 4px solid #1a0801;
+    border-radius: 12px;
+    padding: 8px 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), inset 0 2px 4px rgba(255, 255, 255, 0.15), inset 0 -4px 8px rgba(0, 0, 0, 0.8);
+    position: relative;
+    box-sizing: border-box;
+}
+
+/* Pirinç Istaka Köşe Vidaları */
+.okey-rack-stud {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: radial-gradient(circle, #fde047 30%, #ca8a04 80%, #713f12 100%);
+    border-radius: 50%;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.8);
+}
+.okey-rack-stud.top-left { top: 6px; left: 6px; }
+.okey-rack-stud.top-right { top: 6px; right: 6px; }
+.okey-rack-stud.bottom-left { bottom: 6px; left: 6px; }
+.okey-rack-stud.bottom-right { bottom: 6px; right: 6px; }
+
+/* Gerçek Ahşap Oluklu 2 Raflı Istaka (30 Yuva, Boşluk Bırakılabilir) */
+.okey-rack-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 10px;
+    background: radial-gradient(circle at 50% 0%, #1a0901, #0a0300);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 6px 14px rgba(0, 0, 0, 0.95), inset 0 -2px 4px rgba(255, 255, 255, 0.04);
+    box-sizing: border-box;
+}
+
+.okey-rack-shelf {
+    display: grid;
+    grid-template-columns: repeat(15, minmax(20px, 1fr));
+    gap: 2px;
+    padding: 4px 6px;
+    background: linear-gradient(180deg, #180902 0%, #2b0f03 30%, #150600 100%);
+    border-radius: 8px;
+    border-top: 2px solid #5a2507;
+    border-bottom: 2px solid #0d0400;
+    box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.9), 0 2px 4px rgba(255, 255, 255, 0.04);
+    min-height: 56px;
+    align-items: center;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.okey-rack-shelf-divider {
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #78350f 20%, #b45309 50%, #78350f 80%, transparent);
+    border-radius: 2px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    margin: -2px 0;
+}
+
+/* Tekil Taş Yuvası (Boş veya Dolu) */
+.okey-rack-slot {
+    height: 52px;
+    min-width: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    border-radius: 6px;
+    box-sizing: border-box;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+/* Boş Yuva (Ahşap Oluk Çentiği) */
+.okey-rack-slot.empty {
+    border: 1px dashed rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.28);
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.7);
+    cursor: pointer;
+}
+
+.okey-rack-slot.empty:hover {
+    border-color: rgba(56, 189, 248, 0.5);
+    background: rgba(56, 189, 248, 0.1);
+}
+
+.okey-rack-slot.drag-over {
+    border: 2px dashed #facc15 !important;
+    background: rgba(250, 204, 21, 0.2) !important;
+    transform: scale(1.04);
+}
+
+.okey-rack-slot.occupied {
+    background: transparent;
+}
+
+/* Masada Açılmış Per Tepsisi */
+.okey-open-per-group {
+    background: linear-gradient(145deg, rgba(15, 23, 42, 0.75), rgba(30, 41, 59, 0.65));
+    border: 1px solid rgba(250, 204, 21, 0.25);
+    border-radius: 8px;
+    padding: 6px 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-right: 8px;
+    margin-bottom: 6px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    user-select: none;
+}
+
+.okey-open-per-group > div {
+    pointer-events: none;
+}
+
+.okey-open-per-group button {
+    pointer-events: auto;
+}
+
+/* Sürüklenen Taş Masadaki Per Üzerine Geldiğinde Vurgu (İşleme Hedefi) */
+.okey-open-per-group.per-drag-over {
+    border: 2px dashed #38bdf8 !important;
+    background: linear-gradient(145deg, rgba(14, 165, 233, 0.35), rgba(2, 132, 199, 0.25)) !important;
+    box-shadow: 0 0 18px rgba(56, 189, 248, 0.75), inset 0 0 10px rgba(56, 189, 248, 0.4) !important;
+    transform: scale(1.05);
+}
+
+/* Sürüklenen Taş Taş Atma Bölgesine Geldiğinde Vurgu */
+.okey-corner-slot.discard-drag-over {
+    border: 2px dashed #ef4444 !important;
+    background: linear-gradient(145deg, rgba(239, 68, 68, 0.45), rgba(185, 28, 28, 0.35)) !important;
+    box-shadow: 0 0 22px rgba(239, 68, 68, 0.9), inset 0 0 12px rgba(239, 68, 68, 0.6) !important;
+    transform: scale(1.08);
+}
+
+.discard-btn-drag-over {
+    outline: 3px dashed #facc15 !important;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.9) !important;
+    transform: scale(1.1) !important;
+}
+
+/* Kıraathane Çay Bardağı ve Buhar Animasyonu */
+.tea-widget {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    cursor: default;
+    position: relative;
+    user-select: none;
+}
+
+.tea-steam {
+    position: absolute;
+    top: -9px;
+    left: 4px;
+    font-size: 11px;
+    opacity: 0.85;
+    animation: steamRise 2s infinite ease-in-out;
+}
+
+@keyframes steamRise {
+    0% { transform: translateY(0) scale(0.8); opacity: 0.2; }
+    50% { transform: translateY(-4px) scale(1.1); opacity: 0.8; }
+    100% { transform: translateY(-8px) scale(0.9); opacity: 0; }
+}
+
+/* Sıra Sayacı Nabız Efekti */
+.turn-pulse {
+    animation: turnCardPulse 2s infinite ease-in-out !important;
+}
+
+@keyframes turnCardPulse {
+    0% { box-shadow: 0 0 6px rgba(250, 204, 21, 0.4); border-color: rgba(250, 204, 21, 0.6); }
+    50% { box-shadow: 0 0 18px rgba(250, 204, 21, 0.95); border-color: #facc15; }
+    100% { box-shadow: 0 0 6px rgba(250, 204, 21, 0.4); border-color: rgba(250, 204, 21, 0.6); }
+}
+
+/* Seçilen Puan Rozeti */
+.score-pill-valid {
+    background: linear-gradient(135deg, #059669, #10b981) !important;
+    color: white !important;
+    padding: 3px 10px !important;
+    border-radius: 9999px !important;
+    box-shadow: 0 0 14px rgba(16, 185, 129, 0.7) !important;
+    font-weight: 800 !important;
+    border: 1px solid #34d399 !important;
+}
+
+.score-pill-normal {
+    background: rgba(148, 163, 184, 0.15) !important;
+    color: #94a3b8 !important;
+    padding: 3px 10px !important;
+    border-radius: 9999px !important;
+    border: 1px solid rgba(148, 163, 184, 0.25) !important;
+}
+
+/* ==========================================================
+   📋 A4 KIRAATHANE 101 OKEY YAZBOZ (ÇETELE) STİLLERİ
+   ========================================================== */
+.yazboz-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(6px);
+    z-index: 26000;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.yazboz-a4-sheet {
+    background: #fdfbf7;
+    color: #0f172a;
+    width: 100%;
+    max-width: 650px;
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: 4px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px #d6d3d1;
+    position: relative;
+    padding: 22px 18px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    box-sizing: border-box;
+}
+
+.yazboz-header {
+    text-align: center;
+    border-bottom: 2px dashed #a8a29e;
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+    position: relative;
+}
+
+.yazboz-title {
+    font-size: 19px;
+    font-weight: 900;
+    color: #1c1917;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.yazboz-stamp {
+    display: inline-block;
+    border: 2px solid #dc2626;
+    color: #dc2626;
+    font-size: 11px;
+    font-weight: 900;
+    padding: 2px 8px;
+    border-radius: 4px;
+    transform: rotate(-2deg);
+    text-transform: uppercase;
+    margin-top: 4px;
+}
+
+/* + (ARTI) ŞEKLİNDE KIRAATHANE ÇETELE IZGARASI */
+.yazboz-cross-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border: 3px solid #1c1917;
+    background: #ffffff;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.03);
+}
+
+.yazboz-team-header {
+    padding: 10px 8px;
+    font-weight: 800;
+    font-size: 13px;
+    text-align: center;
+    border-bottom: 3px solid #1c1917;
+}
+
+.yazboz-team-header.team-1 {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-right: 3px solid #1c1917;
+}
+
+.yazboz-team-header.team-2 {
+    background: #fff7ed;
+    color: #c2410c;
+}
+
+.yazboz-section-title {
+    grid-column: span 2;
+    background: #f5f5f4;
+    color: #44403c;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 5px 10px;
+    text-align: center;
+    border-bottom: 2px solid #1c1917;
+}
+
+.yazboz-section-title.divider-plus {
+    border-top: 3px solid #1c1917;
+    border-bottom: 2px solid #1c1917;
+    background: #e7e5e4;
+    color: #1c1917;
+    font-weight: 900;
+}
+
+.yazboz-cell {
+    padding: 10px 12px;
+    min-height: 110px;
+    max-height: 170px;
+    overflow-y: auto;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: #ffffff;
+}
+
+.yazboz-cell.team-1 {
+    border-right: 3px solid #1c1917;
+}
+
+.yazboz-row-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2px 0;
+    border-bottom: 1px dotted #e7e5e4;
+}
+
+.yazboz-row-penalty {
+    color: #1e3a8a;
+    font-weight: 700;
+}
+
+.yazboz-row-siler {
+    color: #dc2626;
+    font-weight: 800;
+    text-decoration: line-through;
+    text-decoration-color: #ef4444;
+    text-decoration-thickness: 2px;
+}
+
+.yazboz-subtotal-bar {
+    grid-column: span 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: #f8fafc;
+    border-bottom: 1px solid #cbd5e1;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.yazboz-subtotal-item {
+    padding: 5px 10px;
+    display: flex;
+    justify-content: space-between;
+}
+.yazboz-subtotal-item.team-1 {
+    border-right: 3px solid #1c1917;
+}
+
+.yazboz-grand-footer {
+    grid-column: span 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: #1c1917;
+    color: white;
+    font-weight: 900;
+    font-size: 13px;
+}
+
+.yazboz-grand-item {
+    padding: 10px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.yazboz-grand-item.team-1 {
+    border-right: 3px solid #78716c;
+}
+
+@media (max-width: 640px) {
+    .okey-table-felt {
+        grid-template-columns: 110px 1fr 110px;
+        gap: 6px;
+        padding: 8px;
+    }
+    .deck-wrapper {
+        gap: 12px;
+        padding: 8px 12px;
+    }
+    .okey-corner-slot {
+        min-height: 70px;
+        padding: 4px;
+    }
+}
+
+/* --- WEBRTC CANLI SESLİ SOHBET (VOICE CHAT) STİLLERİ --- */
+.modal-voice-btn {
+    padding: 5px 12px;
+    background: linear-gradient(135deg, #475569, #334155);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+.modal-voice-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.1);
+}
+.modal-voice-btn:active {
+    transform: translateY(0);
+}
+
+/* Konuşurken Kart Etrafındaki Yeşil Halo ve Dalga */
+.voice-speaking {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.8), inset 0 0 8px rgba(16, 185, 129, 0.4) !important;
+    animation: voiceHaloPulse 1s infinite alternate ease-in-out;
+}
+
+@keyframes voiceHaloPulse {
+    0% { box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
+    100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.95), 0 0 28px rgba(52, 211, 153, 0.5); }
+}
+
+/* Mini Ses Dalgası Barları (3 Çubuklu Animasyon) */
+.voice-wave-bars {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 11px;
+    margin-left: 3px;
+    vertical-align: middle;
+}
+.voice-wave-bars span {
+    width: 2.5px;
+    height: 100%;
+    background-color: #10b981;
+    border-radius: 1px;
+    animation: voiceBarWave 0.8s infinite ease-in-out;
+}
+.voice-wave-bars span:nth-child(1) { animation-delay: 0s; }
+.voice-wave-bars span:nth-child(2) { animation-delay: 0.2s; }
+.voice-wave-bars span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes voiceBarWave {
+    0%, 100% { height: 3px; }
+    50% { height: 11px; }
+}
+
+/* Sesli Sohbet Bildirim Toast'ı */
+.voice-toast {
+    position: fixed;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-30px);
+    background: rgba(15, 23, 42, 0.94);
+    color: #38bdf8;
+    border: 1px solid #38bdf8;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7);
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 800;
+    z-index: 99999;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.voice-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* ==========================================================
+   🎰 MULTIPLAYER CASINO BLACKJACK (21) STİLLERİ
+   ========================================================== */
+.blackjack-modal-content {
+    background: radial-gradient(ellipse at 50% 20%, #0d1b13 0%, #06110a 70%, #020704 100%) !important;
+    border: 3px solid #b45309 !important;
+    border-radius: 24px !important;
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.95), 0 0 40px rgba(245, 158, 11, 0.2), inset 0 2px 10px rgba(254, 240, 138, 0.2) !important;
+    max-width: 960px !important;
+    width: 96% !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+}
+
+.blackjack-header {
+    background: linear-gradient(180deg, #18181b 0%, #09090b 100%);
+    border-bottom: 2px solid #b45309;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+}
+
+.blackjack-title {
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    color: #fef08a;
+    text-shadow: 0 0 12px rgba(250, 204, 21, 0.6);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.bj-badge {
+    background: linear-gradient(135deg, #b45309, #d97706);
+    color: #fffbeb;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+    border: 1px solid #fde68a;
+}
+
+.blackjack-table-container {
+    width: 95%;
+    max-width: 820px;
+    min-height: 610px;
+    padding: 16px 20px 22px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    background: radial-gradient(circle at 50% 25%, #064e3b 0%, #022c22 65%, #011510 100%);
+    border: 3px solid #b45309;
+    border-radius: 22px;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.95), 0 0 30px rgba(245, 158, 11, 0.2);
+    position: relative;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+/* Gerçekçi Lüks Kadife Çuha Masa (Semi-Oval Velvet Felt Table) */
+.bj-felt-table {
+    width: 100%;
+    max-width: 780px;
+    min-height: 350px;
+    background: radial-gradient(circle at 50% 20%, #059669 0%, #047857 40%, #065f46 75%, #064e3b 100%);
+    border: 12px solid #3d1c06;
+    outline: 3px solid #b45309;
+    border-radius: 20px 20px 240px 240px;
+    box-shadow: inset 0 0 70px rgba(0, 0, 0, 0.8), 0 16px 40px rgba(0, 0, 0, 0.85);
+    position: relative;
+    padding: 12px 14px 24px 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-sizing: border-box;
+    margin-bottom: 6px;
+}
+
+/* Çuha Masa Dikiş Hattı */
+.bj-felt-table::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    border: 2px dashed rgba(254, 240, 138, 0.28);
+    border-radius: 12px 12px 240px 240px;
+    pointer-events: none;
+}
+
+/* Krupiye Alanı */
+.bj-dealer-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 5;
+    margin-top: 4px;
+}
+
+.bj-dealer-name {
+    font-size: 15px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    color: #fef08a;
+    text-transform: uppercase;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.bj-dealer-cards {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    min-height: 94px;
+    margin-bottom: 6px;
+}
+
+.bj-dealer-score {
+    background: rgba(0, 0, 0, 0.65);
+    border: 1px solid #facc15;
+    color: #fef08a;
+    font-weight: 800;
+    font-size: 13px;
+    padding: 3px 12px;
+    border-radius: 9999px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+.bj-shoe-indicator {
+    position: absolute;
+    top: 4px;
+    right: 16px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #cbd5e1;
+    background: rgba(15, 23, 42, 0.7);
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Masa Ortası Baskı Yazıları */
+.bj-center-logo {
+    text-align: center;
+    margin: 8px 0;
+    pointer-events: none;
+    user-select: none;
+}
+
+.bj-deck-rules {
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 2.5px;
+    color: rgba(254, 240, 138, 0.55);
+    text-transform: uppercase;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* Durum Bildirim Şeridi */
+.bj-status-banner {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(250, 204, 21, 0.5);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
+    color: #fef08a;
+    font-size: 14px;
+    font-weight: 800;
+    padding: 8px 16px;
+    border-radius: 9999px;
+    margin: 4px auto 14px auto;
+    text-align: center;
+    max-width: 480px;
+    letter-spacing: 0.5px;
+    animation: bjStatusGlow 2s infinite alternate ease-in-out;
+}
+
+@keyframes bjStatusGlow {
+    0% { border-color: rgba(250, 204, 21, 0.4); box-shadow: 0 0 10px rgba(250, 204, 21, 0.2); }
+    100% { border-color: #facc15; box-shadow: 0 0 20px rgba(250, 204, 21, 0.5); }
+}
+
+/* 3 Koltuklu Oyuncu Alanı */
+.bj-seats-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    z-index: 5;
+    position: relative;
+    padding: 0 10px;
+}
+
+.bj-seat-box {
+    background: radial-gradient(circle at 50% 30%, rgba(15, 23, 42, 0.92), rgba(2, 6, 23, 0.96));
+    border: 2px solid rgba(254, 240, 138, 0.2);
+    border-radius: 14px;
+    padding: 8px 6px;
+    min-height: 145px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75);
+    transition: all 0.25s ease;
+}
+
+.bj-seat-box.empty {
+    border: 2px dashed rgba(255, 255, 255, 0.25);
+    background: rgba(15, 23, 42, 0.45);
+    justify-content: center;
+}
+
+.bj-seat-box.my-seat {
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 22px rgba(56, 189, 248, 0.5) !important;
+}
+
+.bj-seat-box.active-turn {
+    border-color: #facc15 !important;
+    box-shadow: 0 0 28px rgba(250, 204, 21, 0.85), inset 0 0 15px rgba(250, 204, 21, 0.3) !important;
+    animation: activeTurnPulse 1.5s infinite alternate ease-in-out;
+}
+
+@keyframes activeTurnPulse {
+    0% { transform: translateY(0); box-shadow: 0 0 16px rgba(250, 204, 21, 0.5); }
+    100% { transform: translateY(-4px); box-shadow: 0 0 32px rgba(250, 204, 21, 0.95); }
+}
+
+.bj-seat-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 5px;
+    font-size: 11px;
+}
+
+.bj-seat-user {
+    font-weight: 800;
+    color: #f1f5f9;
+    max-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bj-seat-balance {
+    font-weight: 800;
+    color: #4ade80;
+    font-size: 11px;
+}
+
+.bj-seat-cards {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    min-height: 84px;
+    margin: 6px 0;
+    flex-wrap: wrap;
+}
+
+.bj-seat-info {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    padding-top: 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.bj-seat-score {
+    background: rgba(0, 0, 0, 0.75);
+    border: 1px solid #94a3b8;
+    color: #f8fafc;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 9999px;
+}
+
+.bj-seat-bet {
+    background: rgba(234, 179, 8, 0.2);
+    border: 1px solid #eab308;
+    color: #fde047;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 9999px;
+}
+
+/* Sonuç Rozetleri (Win, Loss, Push, Blackjack, Bust) */
+.bj-seat-result {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(1);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    z-index: 20;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85);
+    animation: popInResult 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popInResult {
+    0% { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+.bj-seat-result.win {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: 2px solid #6ee7b7;
+    color: #ffffff;
+}
+
+.bj-seat-result.blackjack {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border: 2px solid #fef08a;
+    color: #ffffff;
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.9);
+}
+
+.bj-seat-result.loss {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border: 2px solid #fca5a5;
+    color: #ffffff;
+}
+
+.bj-seat-result.bust {
+    background: linear-gradient(135deg, #991b1b, #7f1d1d);
+    border: 2px solid #f87171;
+    color: #ffffff;
+}
+
+.bj-seat-result.push {
+    background: linear-gradient(135deg, #64748b, #475569);
+    border: 2px solid #cbd5e1;
+    color: #ffffff;
+}
+
+/* Masaya Otur & Kalk Butonları */
+.bj-sit-btn {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    font-size: 13px;
+    font-weight: 900;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 18px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.5);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bj-sit-btn:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.7);
+    filter: brightness(1.1);
+}
+
+.bj-leave-btn {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.6);
+    color: #fca5a5;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.bj-leave-btn:hover {
+    background: #ef4444;
+    color: white;
+}
+
+/* Gerçekçi İskambil Kartı (Realistic Playing Card) */
+.bj-card {
+    width: 48px;
+    height: 72px;
+    background: #ffffff;
+    border-radius: 6px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6), inset 0 0 2px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 3px 4px;
+    box-sizing: border-box;
+    position: relative;
+    user-select: none;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    border: 1px solid #d1d5db;
+    transition: transform 0.2s ease;
+}
+
+.bj-card.red {
+    color: #dc2626;
+}
+
+.bj-card.black {
+    color: #111827;
+}
+
+.bj-card-corner {
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.bj-card-corner.bottom-right {
+    transform: rotate(180deg);
+}
+
+.bj-card-suit-big {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    line-height: 1;
+    opacity: 0.9;
+}
+
+/* Kapalı Kart (Hole Card - Dark Royal Back Pattern) */
+.bj-card.hidden-card {
+    background: repeating-linear-gradient(
+        45deg,
+        #1e3a8a,
+        #1e3a8a 5px,
+        #172554 5px,
+        #172554 10px
+    );
+    border: 2px solid #f8fafc;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
+}
+
+.bj-card-pattern {
+    width: 100%;
+    height: 100%;
+    border: 1px solid rgba(254, 240, 138, 0.6);
+    border-radius: 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fef08a;
+    font-size: 14px;
+}
+
+.bj-card-deal-anim {
+    animation: cardFlyIn 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes cardFlyIn {
+    0% { transform: translateY(-40px) scale(0.6) rotate(-10deg); opacity: 0; }
+    100% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* Alt Kontrol İstasyonu (Dock) */
+.blackjack-bottom-dock {
+    background: linear-gradient(180deg, #18181b 0%, #09090b 100%);
+    border-top: 2px solid #3f3f46;
+    padding: 12px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.bj-betting-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.bj-chips-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Gerçekçi Casino Çipleri */
+.bj-chip-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 900;
+    cursor: pointer;
+    border: 3px dashed rgba(255, 255, 255, 0.85);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6), inset 0 0 4px rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+}
+
+.bj-chip-btn:hover {
+    transform: translateY(-4px) scale(1.1);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.8);
+}
+
+.bj-chip-btn.chip-10 { background: radial-gradient(circle, #3b82f6, #1d4ed8); color: white; }
+.bj-chip-btn.chip-25 { background: radial-gradient(circle, #10b981, #047857); color: white; }
+.bj-chip-btn.chip-50 { background: radial-gradient(circle, #ef4444, #b91c1c); color: white; }
+.bj-chip-btn.chip-100 { background: radial-gradient(circle, #18181b, #000000); color: #facc15; border-color: #facc15; }
+.bj-chip-btn.chip-250 { background: radial-gradient(circle, #8b5cf6, #5b21b6); color: white; }
+.bj-chip-btn.chip-500 { background: radial-gradient(circle, #f59e0b, #b45309); color: white; border-color: #fef08a; }
+
+/* Alt Kontrol İstasyonu & Buton Barları */
+.bj-control-bar {
+    width: 100%;
+    margin-top: 14px;
+    padding: 14px 18px;
+    background: rgba(15, 23, 42, 0.88);
+    border: 1.5px solid rgba(250, 204, 21, 0.35);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-sizing: border-box;
+}
+
+.bj-action-btn, .bj-btn {
+    border: none;
+    border-radius: 10px;
+    font-weight: 800;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+    box-sizing: border-box;
+}
+
+/* Aksiyon Butonları */
+.bj-action-btn.btn-primary, .bj-btn-primary {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #0f172a;
+    font-weight: 900;
+    font-size: 14px;
+    border: 1.5px solid #fef08a;
+    border-radius: 10px;
+    padding: 10px 22px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.45);
+    transition: all 0.2s ease;
+}
+
+.bj-action-btn.btn-primary:hover, .bj-btn-primary:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.65);
+}
+
+.bj-btn-danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    font-weight: 800;
+    font-size: 12px;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.bj-action-btn.btn-secondary, .bj-btn-secondary {
+    background: #3f3f46;
+    color: #e4e4e7;
+    font-weight: 700;
+    font-size: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.bj-action-btn.btn-secondary:hover, .bj-btn-secondary:hover {
+    background: #475569;
+    color: white;
+}
+
+/* Oyun Sırası Hamle Butonları (Kart Çek, Dur, İkiye Katla) */
+.bj-playing-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 6px 0;
+}
+
+.bj-action-btn.btn-hit, .bj-btn-hit {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    font-size: 15px;
+    font-weight: 900;
+    border: 1.5px solid #6ee7b7;
+    border-radius: 12px;
+    padding: 12px 30px;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.5);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.15s ease;
+}
+
+.bj-action-btn.btn-hit:hover, .bj-btn-hit:hover {
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.75);
+}
+
+.bj-action-btn.btn-stand, .bj-btn-stand {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    font-size: 15px;
+    font-weight: 900;
+    border: 1.5px solid #fca5a5;
+    border-radius: 12px;
+    padding: 12px 30px;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(239, 68, 68, 0.5);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.15s ease;
+}
+
+.bj-action-btn.btn-stand:hover, .bj-btn-stand:hover {
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 8px 24px rgba(239, 68, 68, 0.75);
+}
+
+.bj-btn-double {
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    color: white;
+    font-size: 14px;
+    font-weight: 900;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.5);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+}
+
+.bj-btn-double:hover:not(:disabled) {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 22px rgba(139, 92, 246, 0.7);
+}
+
+.bj-btn-double:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Bildirim Toast */
+.bj-toast {
+    position: fixed;
+    top: 75px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-30px);
+    background: rgba(15, 23, 42, 0.95);
+    color: #fef08a;
+    border: 2px solid #facc15;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.85);
+    padding: 10px 22px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 800;
+    z-index: 99999;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.bj-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+@media (max-width: 768px) {
+    .bj-seats-container {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    .bj-felt-table {
+        border-radius: 16px;
+        min-height: auto;
+        padding: 14px 10px;
+    }
+    .bj-card {
+        width: 40px;
+        height: 60px;
+    }
+}
+
+/* ==========================================================================
+   BATAK SET SİSTEMİ & YAZBOZ ÇETELE STİLLERİ
+   ========================================================================== */
+.batak-tab-btn {
+    padding: 6px 14px;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 800;
+    color: #475569;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease-in-out;
+}
+
+.batak-tab-btn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.batak-tab-btn.active {
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: white;
+    border-color: #1d4ed8;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+}
+
+.batak-tab-btn.grand {
+    background: #fef3c7;
+    border-color: #f59e0b;
+    color: #b45309;
+}
+
+.batak-tab-btn.grand.active {
+    background: linear-gradient(135deg, #d97706, #b45309);
+    color: white;
+    border-color: #92400e;
+    box-shadow: 0 2px 8px rgba(217, 119, 6, 0.4);
+}
+
+.batak-yazboz-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #ffffff;
+    border: 2px solid #1c1917;
+    font-size: 13px;
+    text-align: center;
+}
+
+.batak-yazboz-table th {
+    background: #f8fafc;
+    color: #0f172a;
+    font-weight: 900;
+    padding: 8px 10px;
+    border: 1px solid #cbd5e1;
+    border-bottom: 2px solid #1c1917;
+}
+
+.batak-yazboz-table td {
+    padding: 7px 10px;
+    border: 1px solid #e2e8f0;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.batak-yazboz-table tr:nth-child(even) td {
+    background: #fcfcfc;
+}
+
+.batak-yazboz-table tr.total-row td {
+    background: #f1f5f9;
+    font-weight: 900;
+    font-size: 14px;
+    border-top: 2px solid #1c1917;
+    border-bottom: 1px solid #cbd5e1;
+    color: #0f172a;
+}
+
+.batak-yazboz-table tr.rank-row td {
+    background: #fffbeb;
+    font-weight: 900;
+    color: #b45309;
+    border-bottom: 1px solid #fde68a;
+}
+
+.batak-yazboz-table tr.points-row td {
+    background: #f0fdf4;
+    font-weight: 900;
+    font-size: 14px;
+    color: #15803d;
+    border-bottom: 2px solid #1c1917;
+}
+
+.tie-breaker-badge {
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    color: white;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    font-weight: 900;
+    font-size: 12px;
+    animation: tieGlowPulse 1.2s infinite alternate ease-in-out;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.7);
+    display: inline-block;
+}
+
+@keyframes tieGlowPulse {
+    0% {
+        transform: scale(0.98);
+        box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+    }
+    100% {
+        transform: scale(1.04);
+        box-shadow: 0 0 18px rgba(239, 68, 68, 0.9), 0 0 25px rgba(250, 204, 21, 0.6);
+    }
+}
+
+/* --- DENİZDEN BABAM ÇIKTI (BABA PETİ & ANİMASYONLARI) --- */
+@keyframes slideDownNotice {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -40px);
+    }
+    100% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+.father-pet-speech-bubble {
+    position: absolute;
+    background: #ffffff;
+    color: #1e293b;
+    border-radius: 12px;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 800;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.35);
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 100;
+    border: 2px solid #f59e0b;
+}
+
+.father-pet-speech-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px 6px 0;
+    border-style: solid;
+    border-color: #ffffff transparent;
+    display: block;
+    width: 0;
+}
+
+/* ============================================================================ */
+/* 25. VIP AVRUPA RULETİ (EUROPEAN ROULETTE 0-36)                               */
+/* ============================================================================ */
+.roulette-table-container {
+    width: 1080px;
+    max-width: 98vw;
+    max-height: 96vh;
+    background: radial-gradient(ellipse at 50% 30%, #064e3b 0%, #022c22 65%, #011611 100%);
+    border: 3px solid #facc15;
+    border-radius: 20px;
+    box-shadow: 0 0 50px rgba(16, 185, 129, 0.35), 0 25px 60px rgba(0, 0, 0, 0.9);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    user-select: none;
+    animation: zoomInVictory 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.roulette-top-bar {
+    padding: 12px 20px;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.95), rgba(6, 78, 59, 0.75));
+    border-bottom: 2px solid rgba(250, 204, 21, 0.4);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.roulette-history-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    min-height: 28px;
+}
+
+.roulette-hist-pill {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+.roulette-hist-pill.green { background: #10b981; }
+.roulette-hist-pill.red { background: #ef4444; }
+.roulette-hist-pill.black { background: #1e293b; }
+
+.roulette-main-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 20px;
+    gap: 20px;
+    flex: 1;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.roulette-wheel-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 8px;
+}
+
+.roulette-result-banner {
+    position: absolute;
+    bottom: -10px;
+    background: rgba(15, 23, 42, 0.95);
+    border: 2px solid #facc15;
+    border-radius: 12px;
+    padding: 6px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 20;
+}
+
+.roulette-result-badge {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    color: white;
+    font-size: 18px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+}
+
+.roulette-felt-grid-wrapper {
+    background: linear-gradient(145deg, #065f46, #044e39);
+    border: 3px solid #ca8a04;
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.7), 0 8px 20px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    user-select: none;
+}
+
+.roulette-grid {
+    display: flex;
+    gap: 4px;
+}
+
+.roulette-cell {
+    border: 1px solid rgba(250, 204, 21, 0.45);
+    color: white;
+    font-weight: 900;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.1s ease, filter 0.1s ease, background 0.1s ease;
+    border-radius: 4px;
+}
+
+.roulette-cell:hover {
+    filter: brightness(1.25);
+    transform: scale(1.04);
+    z-index: 5;
+    border-color: #fde047;
+}
+
+.roulette-cell.has-bet {
+    outline: 2px solid #facc15;
+}
+
+.roulette-cell.zero-cell {
+    width: 38px;
+    background: #10b981;
+    font-size: 20px;
+    border-radius: 6px 0 0 6px;
+}
+
+.roulette-numbers-board {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.roulette-row {
+    display: flex;
+    gap: 4px;
+}
+
+.roulette-numbers-board .roulette-cell {
+    width: 44px;
+    height: 36px;
+}
+
+.roulette-numbers-board .roulette-cell.red {
+    background: linear-gradient(135deg, #dc2626, #991b1b);
+}
+
+.roulette-numbers-board .roulette-cell.black {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+}
+
+.roulette-col-bets {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.roulette-col-bets .roulette-cell {
+    width: 42px;
+    height: 36px;
+    background: rgba(15, 23, 42, 0.6);
+    color: #facc15;
+    font-size: 11px;
+}
+
+.roulette-dozens-row {
+    display: flex;
+    gap: 4px;
+    margin-left: 42px;
+}
+
+.roulette-dozens-row .roulette-cell {
+    flex: 1;
+    height: 32px;
+    background: rgba(15, 23, 42, 0.7);
+    color: #fef08a;
+    font-size: 11.5px;
+}
+
+.roulette-outside-row {
+    display: flex;
+    gap: 4px;
+    margin-left: 42px;
+}
+
+.roulette-outside-row .roulette-cell {
+    flex: 1;
+    height: 34px;
+    background: rgba(15, 23, 42, 0.75);
+    font-size: 11px;
+}
+
+.roulette-outside-row .red-color-bet {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: white;
+}
+
+.roulette-outside-row .black-color-bet {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: white;
+}
+
+.cell-chip-badge {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fde047 30%, #ca8a04 100%);
+    color: #0f172a;
+    font-size: 10px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed #ffffff;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.8);
+    pointer-events: none;
+    animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.roulette-bottom-bar {
+    padding: 12px 20px;
+    background: linear-gradient(180deg, #09090b 0%, #030712 100%);
+    border-top: 2px solid #ca8a04;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.roulette-chip {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 900;
+    cursor: pointer;
+    border: 3px dashed rgba(255, 255, 255, 0.85);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.roulette-chip:hover {
+    transform: translateY(-3px) scale(1.1);
+}
+
+.roulette-chip.selected {
+    transform: translateY(-5px) scale(1.15);
+    box-shadow: 0 0 15px #facc15, 0 6px 12px rgba(0,0,0,0.8);
+    border-color: #facc15;
+}
+
+.chip-10 { background: radial-gradient(circle, #38bdf8 0%, #0284c7 100%); color: white; }
+.chip-50 { background: radial-gradient(circle, #ef4444 0%, #b91c1c 100%); color: white; }
+.chip-100 { background: radial-gradient(circle, #10b981 0%, #047857 100%); color: white; }
+.chip-250 { background: radial-gradient(circle, #a855f7 0%, #7e22ce 100%); color: white; }
+.chip-1000 { background: radial-gradient(circle, #f59e0b 0%, #b45309 100%); color: #0f172a; }
+.chip-5000 { background: radial-gradient(circle, #f43f5e 0%, #881337 100%); color: white; }
+
+.roulette-spin-btn {
+    padding: 10px 28px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    font-size: 15px;
+    font-weight: 900;
+    border: 2px solid #34d399;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.5);
+    transition: all 0.15s ease;
+}
+
+.roulette-spin-btn:hover:not(:disabled) {
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 6px 22px rgba(16, 185, 129, 0.7);
+}
+
+@media (max-width: 1140px) {
+    .roulette-table-container {
+        width: 98vw;
+    }
+    .roulette-main-area {
+        gap: 12px;
+        padding: 10px 12px;
+    }
+    .roulette-wheel-wrapper canvas {
+        width: 230px !important;
+        height: 230px !important;
+    }
+    .roulette-numbers-board .roulette-cell {
+        width: 39px;
+        height: 34px;
+        font-size: 12px;
+    }
+    .roulette-cell.zero-cell {
+        width: 35px;
+        font-size: 18px;
+    }
+    .roulette-col-bets .roulette-cell {
+        width: 37px;
+        height: 34px;
+        font-size: 10.5px;
+    }
+    .roulette-dozens-row .roulette-cell {
+        font-size: 10.5px;
+    }
+    .roulette-outside-row .roulette-cell {
+        font-size: 10px;
+    }
+}
+
+/* ============================================================================ */
+/* 26. ⚡ DEDENİN ŞİMŞEK SLOTU 777 (3-REEL VEGAS SLOT)                         */
+/* ============================================================================ */
+.slot-cabinet {
+    width: 620px;
+    max-width: 95vw;
+    background: radial-gradient(ellipse at 50% 20%, #1e1b4b 0%, #0f172a 70%, #020617 100%);
+    border: 4px solid #facc15;
+    border-radius: 22px;
+    box-shadow: 0 0 50px rgba(250, 204, 21, 0.4), 0 25px 60px rgba(0, 0, 0, 0.95);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    user-select: none;
+    position: relative;
+    animation: zoomInVictory 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.slot-top-bar {
+    padding: 12px 20px;
+    background: linear-gradient(180deg, #312e81 0%, #1e1b4b 100%);
+    border-bottom: 3px solid #f59e0b;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.slot-title {
+    font-size: 18px;
+    font-weight: 900;
+    color: #facc15;
+    text-shadow: 0 0 12px rgba(250, 204, 21, 0.8);
+    letter-spacing: 0.8px;
+}
+
+.slot-top-bar.jackpot-flash {
+    animation: jackpotStrobe 0.4s infinite alternate;
+}
+
+@keyframes jackpotStrobe {
+    0% { background: #facc15; filter: drop-shadow(0 0 30px #facc15); }
+    100% { background: #ef4444; filter: drop-shadow(0 0 30px #ef4444); }
+}
+
+.slot-body {
+    padding: 24px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    background: radial-gradient(circle at center, #090d16 0%, #020617 100%);
+    position: relative;
+}
+
+.slot-window {
+    width: 380px;
+    height: 170px;
+    background: linear-gradient(180deg, #0f172a 0%, #020617 100%);
+    border: 4px solid #ca8a04;
+    border-radius: 14px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 6px;
+    box-shadow: inset 0 0 25px rgba(0,0,0,0.9), 0 10px 30px rgba(0,0,0,0.8);
+    position: relative;
+    overflow: hidden;
+}
+
+.slot-payline {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: rgba(250, 204, 21, 0.4);
+    box-shadow: 0 0 8px rgba(250, 204, 21, 0.5);
+    transform: translateY(-50%);
+    pointer-events: none;
+    z-index: 10;
+}
+
+.slot-payline.active-win {
+    background: #4ade80;
+    box-shadow: 0 0 18px #4ade80, 0 0 30px #22c55e;
+    height: 4px;
+    animation: paylinePulse 0.5s infinite alternate;
+}
+
+@keyframes paylinePulse {
+    0% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
+.slot-reel-viewport {
+    width: 105px;
+    height: 100%;
+    background: linear-gradient(180deg, #18181b 0%, #27272a 50%, #18181b 100%);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 8px 15px rgba(0,0,0,0.8), inset 0 -8px 15px rgba(0,0,0,0.8);
+}
+
+.slot-reel-strip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: translateY(-80px);
+}
+
+.slot-reel-strip.spinning {
+    animation: reelSpinBlur 0.18s linear infinite;
+    filter: blur(2.5px);
+}
+
+@keyframes reelSpinBlur {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-240px); }
+}
+
+.slot-symbol-item {
+    width: 105px;
+    height: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+.slot-sym-icon {
+    font-size: 36px;
+    line-height: 1;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));
+}
+
+.slot-sym-name {
+    font-size: 9.5px;
+    font-weight: 800;
+    color: #cbd5e1;
+    margin-top: 2px;
+}
+
+.slot-symbol-item.win-pulse {
+    animation: symbolWinHop 0.4s ease-in-out infinite alternate;
+}
+
+@keyframes symbolWinHop {
+    0% { transform: scale(1); filter: drop-shadow(0 0 4px #facc15); }
+    100% { transform: scale(1.15); filter: drop-shadow(0 0 16px #facc15); }
+}
+
+/* Mekanik Çevirme Kolu (Lever) */
+.slot-lever-housing {
+    width: 36px;
+    height: 140px;
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    user-select: none;
+}
+
+.slot-lever-pivot {
+    width: 24px;
+    height: 24px;
+    background: radial-gradient(circle, #ca8a04 0%, #78350f 100%);
+    border: 2px solid #fde047;
+    border-radius: 50%;
+    position: absolute;
+    bottom: 20px;
+    left: 6px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.8);
+    z-index: 5;
+}
+
+.slot-lever-assembly {
+    position: absolute;
+    bottom: 30px;
+    left: 14px;
+    width: 8px;
+    height: 80px;
+    transform-origin: bottom center;
+    transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+    z-index: 10;
+}
+
+.slot-lever-arm {
+    width: 8px;
+    height: 80px;
+    background: linear-gradient(90deg, #94a3b8 0%, #f1f5f9 50%, #64748b 100%);
+    border-radius: 4px;
+    position: relative;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.6);
+}
+
+.slot-lever-knob {
+    width: 26px;
+    height: 26px;
+    background: radial-gradient(circle at 35% 35%, #ef4444 0%, #991b1b 100%);
+    border: 2px solid #fecaca;
+    border-radius: 50%;
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.8);
+    pointer-events: none;
+}
+
+.slot-win-banner {
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.95), rgba(202, 138, 4, 0.95));
+    border: 2px solid #fef08a;
+    border-radius: 12px;
+    padding: 10px 20px;
+    margin: 0 20px 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #0f172a;
+    box-shadow: 0 10px 30px rgba(250, 204, 21, 0.5);
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.slot-control-bar {
+    padding: 14px 20px;
+    background: linear-gradient(180deg, #09090b 0%, #030712 100%);
+    border-top: 2px solid #ca8a04;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.slot-bet-btn {
+    padding: 6px 12px;
+    background: rgba(30, 41, 59, 0.8);
+    color: white;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    font-weight: 800;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.slot-bet-btn:hover {
+    background: #334155;
+    border-color: #94a3b8;
+}
+
+.slot-bet-btn.active {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border-color: #fde047;
+    color: #0f172a;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
+}
+
+.slot-max-btn {
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+    color: white;
+    border: 1px solid #f87171;
+    border-radius: 6px;
+    font-weight: 900;
+    font-size: 11px;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.slot-max-btn:hover {
+    transform: scale(1.05);
+}
+
+.slot-secondary-btn {
+    padding: 8px 14px;
+    background: rgba(30, 41, 59, 0.9);
+    color: #cbd5e1;
+    border: 1px solid #475569;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.slot-secondary-btn:hover {
+    background: #334155;
+    color: white;
+}
+
+.slot-secondary-btn.active {
+    background: #dc2626;
+    border-color: #f87171;
+    color: white;
+    animation: pulse 1s infinite;
+}
+
+.slot-spin-btn {
+    padding: 10px 32px;
+    background: linear-gradient(135deg, #facc15 0%, #eab308 50%, #ca8a04 100%);
+    color: #0f172a;
+    font-size: 16px;
+    font-weight: 900;
+    border: 2px solid #fef08a;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(250, 204, 21, 0.6);
+    transition: all 0.15s ease;
+}
+
+.slot-spin-btn:hover:not(:disabled) {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 24px rgba(250, 204, 21, 0.9);
+}
+
+.slot-paytable-panel {
+    background: rgba(15, 23, 42, 0.98);
+    border-top: 2px solid #facc15;
+    padding: 12px 18px;
+    flex-direction: column;
+}
+
+.slot-paytable-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.paytable-item {
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 6px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11.5px;
+}
+
+.paytable-item.jackpot {
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(202, 138, 4, 0.3));
+    border-color: #facc15;
+    color: #fde047;
+}
+
+.paytable-item.cherry {
+    color: #fca5a5;
+}
+
+/* =========================================================
+   CANLI SESLİ SOHBET (VOICE CHAT) & "C" TUŞU GÖSTERGELERİ
+   ========================================================= */
+
+/* Ses Bildirim Toast'u */
+.voice-toast {
+    position: fixed;
+    top: 75px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: rgba(15, 23, 42, 0.94);
+    color: #f8fafc;
+    border: 1.5px solid #10b981;
+    border-radius: 9999px;
+    padding: 8px 22px;
+    font-size: 13px;
+    font-weight: 800;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6), 0 0 15px rgba(16, 185, 129, 0.4);
+    z-index: 100000;
+    pointer-events: none;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+}
+
+.voice-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Blackjack Masasında Konuşan Oyuncu Koltuğu Parıldaması */
+.bj-seat-box.voice-speaking {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 24px rgba(16, 185, 129, 0.9), inset 0 0 12px rgba(16, 185, 129, 0.35) !important;
+    animation: bjVoiceSeatPulse 1s infinite alternate ease-in-out !important;
+}
+
+@keyframes bjVoiceSeatPulse {
+    0% {
+        box-shadow: 0 0 16px rgba(16, 185, 129, 0.5), inset 0 0 8px rgba(16, 185, 129, 0.2);
+    }
+    100% {
+        box-shadow: 0 0 30px rgba(16, 185, 129, 1), inset 0 0 15px rgba(16, 185, 129, 0.5);
+    }
+}
+
+/* 101 Okey ve Masalarda Konuşma Dalgaları */
+.voice-wave-bars {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 12px;
+    vertical-align: middle;
+    margin-left: 4px;
+}
+
+.voice-wave-bars span {
+    width: 2.5px;
+    background: #10b981;
+    border-radius: 1px;
+    animation: voiceBarWave 0.6s infinite ease-in-out alternate;
+}
+
+.voice-wave-bars span:nth-child(1) { height: 4px; animation-delay: 0.1s; }
+.voice-wave-bars span:nth-child(2) { height: 10px; animation-delay: 0.25s; }
+.voice-wave-bars span:nth-child(3) { height: 6px; animation-delay: 0.4s; }
+
+@keyframes voiceBarWave {
+    0% { height: 3px; }
+    100% { height: 12px; }
+}
+
+/* Üst Bar Sesli Sohbet Butonu Hover & Efekt */
+#globalVoiceNavBtn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.15);
+}
+
+#bjVoiceToggleBtn:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.15);
+}
+
+/* Mekanlar Açılır Menü Stilleri */
+.places-dropdown-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.places-dropdown-btn {
+    user-select: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.places-dropdown-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(14, 165, 233, 0.55) !important;
+    filter: brightness(1.1);
+}
+
+.place-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 14px;
+    background: rgba(30, 41, 59, 0.65);
+    color: #f1f5f9;
+    font-size: 13px;
+    font-weight: 700;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: left;
+    box-sizing: border-box;
+    transition: all 0.16s ease-in-out;
+}
+
+.place-menu-item:hover {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.35), rgba(99, 102, 241, 0.35));
+    border-color: rgba(56, 189, 248, 0.5);
+    color: #ffffff;
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
+}
+
+.place-menu-item:active {
+    transform: scale(0.98) translateX(2px);
+}
+
+/* ========================================================
+   XOX (TİC-TAC-TOE) & AMİRAL BATTI (BATTLESHİP) OYUN STİLLERİ
+   ======================================================== */
+.xox-mode-btn, .xox-diff-btn {
+    padding: 6px 14px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
+    color: #cbd5e1;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.xox-mode-btn.active, .xox-diff-btn.active {
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    border-color: #38bdf8;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(56, 189, 248, 0.35);
+}
+.xox-board-container {
+    display: grid;
+    grid-template-columns: repeat(3, 76px);
+    grid-template-rows: repeat(3, 76px);
+    gap: 8px;
+    background: rgba(15, 23, 42, 0.7);
+    padding: 10px;
+    border-radius: 14px;
+    border: 1.5px solid rgba(56, 189, 248, 0.25);
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+.xox-cell {
+    background: rgba(30, 41, 59, 0.85);
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 38px;
+    font-weight: 900;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+}
+.xox-cell:hover:empty {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.5);
+    transform: scale(1.02);
+}
+.xox-cell.x {
+    color: #38bdf8;
+    text-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+}
+.xox-cell.o {
+    color: #f43f5e;
+    text-shadow: 0 0 12px rgba(244, 63, 94, 0.8);
+}
+.xox-cell.winning-cell {
+    background: rgba(250, 204, 21, 0.25) !important;
+    border-color: #facc15 !important;
+    animation: winPulse 0.8s infinite alternate ease-in-out;
+}
+@keyframes winPulse {
+    from { transform: scale(1); box-shadow: 0 0 8px #facc15; }
+    to { transform: scale(1.06); box-shadow: 0 0 20px #facc15; }
+}
+
+/* AMİRAL BATTI (BATTLESHIP) RADAR VE HÜCRE STİLLERİ */
+.naval-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    gap: 3px;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    max-width: 275px;
+    margin: 0 auto;
+    background: rgba(5, 15, 30, 0.9);
+    padding: 6px;
+    border-radius: 8px;
+    border: 1.5px solid rgba(56, 189, 248, 0.25);
+    box-sizing: border-box;
+}
+.naval-cell {
+    background: rgba(15, 30, 55, 0.7);
+    border: 1px solid rgba(56, 189, 248, 0.12);
+    border-radius: 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 13px;
+    user-select: none;
+    transition: all 0.12s ease;
+}
+.naval-cell.clickable:hover {
+    background: rgba(239, 68, 68, 0.35);
+    border-color: #ef4444;
+    cursor: crosshair;
+    transform: scale(1.08);
+}
+.naval-cell.has-ship {
+    background: rgba(34, 197, 94, 0.25);
+    border-color: #22c55e;
+}
+.naval-cell.hit {
+    background: rgba(239, 68, 68, 0.45) !important;
+    border-color: #ef4444 !important;
+    animation: hitPulse 0.6s ease;
+}
+.naval-cell.miss {
+    background: rgba(100, 116, 139, 0.25) !important;
+    border-color: rgba(148, 163, 184, 0.3) !important;
+}
+.naval-cell.sunk {
+    background: rgba(153, 27, 27, 0.75) !important;
+    border-color: #f87171 !important;
+}
+@keyframes hitPulse {
+    0% { transform: scale(0.6); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+.naval-shake {
+    animation: navalShakeAnim 0.35s ease;
+}
+@keyframes navalShakeAnim {
+    0%, 100% { transform: translate(0, 0); }
+    20% { transform: translate(-4px, 3px); }
+    40% { transform: translate(4px, -3px); }
+    60% { transform: translate(-3px, 2px); }
+    80% { transform: translate(3px, -1px); }
+}
+
+/* ==========================================================
+   🟢 ÇEVRİMİÇİ OYUNCULAR (ONLINE PLAYERS) MODAL & BUTON STİLLERİ
+   ========================================================== */
+@keyframes onlineDotPulse {
+    0% { transform: scale(0.9); opacity: 0.8; box-shadow: 0 0 4px #22c55e; }
+    50% { transform: scale(1.25); opacity: 1; box-shadow: 0 0 12px #22c55e; }
+    100% { transform: scale(0.9); opacity: 0.8; box-shadow: 0 0 4px #22c55e; }
+}
+
+.online-filter-chip {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+    user-select: none;
+}
+
+.online-filter-chip:hover {
+    background: rgba(14, 165, 233, 0.3) !important;
+    border-color: #38bdf8 !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+}
+
+.online-player-card {
+    transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.online-player-card:hover {
+    background: rgba(30, 41, 59, 0.95) !important;
+    border-color: rgba(56, 189, 248, 0.35) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4), 0 0 15px rgba(14, 165, 233, 0.15);
+}
+
+/* ==========================================================
+   AION 2 TARZI SKİN SETLERİ (1-2-3) & ŞANSLI KUTU STİLLERİ
+   ========================================================== */
+.skin-set-slot {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    user-select: none;
+}
+
+.skin-set-slot:hover {
+    transform: translateY(-2px);
+    border-color: #38bdf8 !important;
+}
+
+.skin-set-slot:active {
+    transform: scale(0.96);
+}
+
+.skin-set-slot.active {
+    box-shadow: 0 0 14px rgba(250, 204, 21, 0.5) !important;
+}
+
+@keyframes popIn {
+    0% { transform: scale(0.85); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* ==========================================================
+   DOST KAZIĞI (4 KİŞİLİK EŞLİ) MASA VE KURAL STİLLERİ
+   ========================================================== */
+.dost-kazigi-felt {
+    background: radial-gradient(circle at 50% 50%, #15803d 0%, #166534 60%, #14532d 100%);
+    border: 3px solid #ca8a04;
+    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.7), 0 8px 30px rgba(0, 0, 0, 0.6);
+    border-radius: 16px;
+    position: relative;
+    padding: 12px;
+    box-sizing: border-box;
+    min-height: 480px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* Sol Üst Kural & Ceza Kartları Panosu */
+.dost-kazigi-cheat-sheet {
+    background: rgba(15, 23, 42, 0.92);
+    border: 1px solid rgba(250, 204, 21, 0.4);
+    border-radius: 10px;
+    padding: 8px 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    color: #f8fafc;
+    font-size: 11px;
+    max-width: 200px;
+    backdrop-filter: blur(8px);
+    user-select: none;
+    z-index: 10;
+}
+
+.dost-kazigi-cheat-sheet .cheat-header {
+    font-weight: 900;
+    font-size: 11.5px;
+    color: #facc15;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    padding-bottom: 4px;
+    margin-bottom: 6px;
+}
+
+.dost-kazigi-cheat-sheet .cheat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2.5px 0;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
+}
+
+.dost-kazigi-cheat-sheet .cheat-row:last-child {
+    border-bottom: none;
+}
+
+.dost-kazigi-cheat-sheet .cheat-row.danger {
+    color: #f87171;
+    font-weight: bold;
+}
+
+.dost-kazigi-cheat-sheet .cheat-row.warn {
+    color: #fbbf24;
+    font-weight: bold;
+}
+
+/* Koltuk Alanları */
+.dk-player-zone {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 6px 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.dk-player-zone.active-turn {
+    border-color: #facc15 !important;
+    box-shadow: 0 0 16px rgba(250, 204, 21, 0.6) !important;
+}
+
+.dk-team-badge {
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 999px;
+    letter-spacing: 0.3px;
+}
+
+.dk-team-a {
+    background: linear-gradient(135deg, #1d4ed8, #2563eb);
+    color: #eff6ff;
+    border: 1px solid #60a5fa;
+}
+
+.dk-team-b {
+    background: linear-gradient(135deg, #b91c1c, #dc2626);
+    color: #fef2f2;
+    border: 1px solid #f87171;
+}
+
+/* Kasa / Açık Kart Yığını (Ön Alan) */
+.dk-front-stack {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    min-height: 85px;
+    min-width: 65px;
+    padding: 2px;
+}
+
+.dk-front-stack .stack-counter {
+    position: absolute;
+    bottom: -6px;
+    right: -6px;
+    background: rgba(15, 23, 42, 0.95);
+    border: 1.5px solid #facc15;
+    color: #facc15;
+    font-size: 10px;
+    font-weight: 900;
+    border-radius: 999px;
+    padding: 1px 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+    z-index: 20;
+}
+
+.dk-front-stack .stack-penalty-badge {
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+    color: white;
+    font-size: 9.5px;
+    font-weight: 900;
+    border-radius: 6px;
+    padding: 1px 5px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    z-index: 20;
+}
+
+/* Kart Vurgulama ve Oynanabilirlik */
+.card.playable-match {
+    border-color: #facc15 !important;
+    box-shadow: 0 0 14px rgba(250, 204, 21, 0.8), 0 8px 16px rgba(0,0,0,0.5) !important;
+    animation: matchPulse 1.8s infinite ease-in-out;
+    cursor: pointer !important;
+}
+
+@keyframes matchPulse {
+    0%, 100% { transform: translateY(0); box-shadow: 0 0 12px rgba(250, 204, 21, 0.8); }
+    50% { transform: translateY(-6px); box-shadow: 0 0 20px rgba(250, 204, 21, 1), 0 10px 20px rgba(0,0,0,0.6); }
+}
+
+.card.unplayable-dim {
+    opacity: 0.45;
+    filter: grayscale(40%);
+    cursor: not-allowed !important;
+}
+
+/* Aksiyon Seçim Modalı (Ortayı vurma, eşini kurtarma, sağ/sol rakip) */
+.dk-action-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 15, 30, 0.82);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    border-radius: 14px;
+}
+
+.dk-action-modal-card {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.96));
+    border: 2px solid #facc15;
+    border-radius: 14px;
+    padding: 18px 24px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 25px rgba(250, 204, 21, 0.3);
+    max-width: 420px;
+    width: 90%;
+    text-align: center;
+    color: white;
+    animation: popIn 0.2s ease-out;
+}
+
+.dk-action-btn {
+    width: 100%;
+    padding: 10px 14px;
+    margin: 6px 0;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.dk-action-btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+}
+
+.dk-action-btn.btn-hit-center {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: white;
+}
+
+.dk-action-btn.btn-support {
+    background: linear-gradient(135deg, #059669, #10b981);
+    color: white;
+}
+
+.dk-action-btn.btn-lock {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: white;
+}
+
+.dk-action-btn.btn-neutral {
+    background: linear-gradient(135deg, #475569, #334155);
+    color: white;
+}
