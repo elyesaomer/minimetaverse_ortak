@@ -76,6 +76,19 @@
                         </div>`
                     ).join('');
                 }
+            const chessList = document.getElementById('chessLeaderList');
+            if (chessList) {
+                if (!data.chess || data.chess.length === 0) {
+                    chessList.innerHTML = "<div style='color:#94a3b8; font-style:italic;'>Henüz kayıt yok</div>";
+                } else {
+                    let medals = ["🥇", "🥈", "🥉", "4.", "5."];
+                    chessList.innerHTML = data.chess.map((item, idx) =>
+                        `<div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                            <span>${medals[idx] || (idx + 1) + '.'} <b>${item.name}</b></span>
+                            <span style="color:#facc15; font-weight:bold;">${item.wins} Galibiyet</span>
+                        </div>`
+                    ).join('');
+                }
             }
         });
     }

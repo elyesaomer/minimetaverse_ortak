@@ -592,6 +592,15 @@
                     </select>
                 </div>
 
+                <!-- Satranç Süre Modu Seçimi -->
+                <div id="newTableChessTimeModeContainer" style="display:none; background: rgba(30, 41, 59, 0.8); border: 1.5px solid rgba(250, 204, 21, 0.4); border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; justify-content:center; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <label style="font-size:13px; font-weight:bold; color:#facc15;">⏱️ Satranç Süresi:</label>
+                    <select id="newTableChessTimeModeSelect" style="padding:7px 14px; border-radius:6px; background:#0f172a; color:#facc15; border:1.5px solid #facc15; font-weight:900; font-size:13px; outline:none; cursor:pointer;">
+                        <option value="10m" selected>⏱️ Süreli (Oyuncu Başına 10 Dakika)</option>
+                        <option value="untimed">♾️ Süresiz (Zaman Kısıtlamasız)</option>
+                    </select>
+                </div>
+
                 <!-- Bahis Seçimi -->
                 <div style="background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 10px 14px; display:flex; justify-content:center; align-items:center; gap:10px; flex-wrap:wrap;">
                     <label style="font-size:13px; font-weight:bold; color:#facc15;">💰 Masa Bahsi:</label>
@@ -636,6 +645,10 @@
                 <div style="flex: 1; min-width: 160px; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
                     <h3 style="color: #ec4899; margin: 0 0 10px 0; font-size: 15px; text-align: center;">🀄 101 Okey Piri</h3>
                     <div id="okey101LeaderList" style="font-size: 13px; display:flex; flex-direction:column; gap:6px;">Yükleniyor...</div>
+                </div>
+                <div style="flex: 1; min-width: 160px; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
+                    <h3 style="color: #facc15; margin: 0 0 10px 0; font-size: 15px; text-align: center;">♟️ Satranç Ustaları</h3>
+                    <div id="chessLeaderList" style="font-size: 13px; display:flex; flex-direction:column; gap:6px;">Yükleniyor...</div>
                 </div>
             </div>
 
@@ -2338,6 +2351,88 @@
         </div>
     </div>
 
+    <!-- 4.3 SATRANÇ (CHESS) MODALI -->
+    <div id="chessModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 7, 18, 0.92); z-index: 28000; justify-content: center; align-items: center; color: white; backdrop-filter: blur(12px); padding: 12px; box-sizing: border-box;">
+        <div id="chessModalContent" style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(24, 34, 52, 0.96)); border: 1.5px solid rgba(250, 204, 21, 0.4); border-radius: 18px; width: 100%; max-width: 580px; box-shadow: 0 25px 65px rgba(0, 0, 0, 0.9), 0 0 30px rgba(250, 204, 21, 0.15); overflow: hidden; display: flex; flex-direction: column; position: relative;">
+            
+            <!-- Başlık ve Taşıma Çubuğu -->
+            <div id="chessModalHeader" style="background: rgba(15, 23, 42, 0.98); padding: 10px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); display: flex; justify-content: space-between; align-items: center; cursor: move; user-select: none;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 20px;">♟️</span>
+                    <span style="font-weight: 900; font-size: 15px; color: #facc15; letter-spacing: 0.5px;">Satranç (FIDE)</span>
+                    <span id="chessBetBadge" style="font-size: 11px; background: rgba(250, 204, 21, 0.15); border: 1px solid #facc15; padding: 2px 7px; border-radius: 999px; font-weight: 800;">Kafe Masası</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button type="button" onclick="toggleBoardFlip()" style="padding: 4px 10px; font-size: 11px; font-weight: 800; background: linear-gradient(135deg, #475569, #334155); border: 1px solid #64748b; color: white; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px;" title="Tahtayı Döndür (Çevir)"><span>🔄</span><span>Döndür</span></button>
+                    <button type="button" id="chessChatToggleBtn" onclick="toggleChatPanel(event)" style="padding: 4px 10px; font-size: 11px; font-weight: 800; background: linear-gradient(135deg, #0d9488, #0f766e); border: 1px solid #2dd4bf; color: white; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(13,148,136,0.3);" title="Sohbet Panelini Aç / Kapat"><span>💬</span><span>Sohbet</span></button>
+                    <div class="game-window-controls" style="display: flex; align-items: center; gap: 6px;">
+                        <button type="button" class="game-win-btn game-win-min-btn" onclick="minimizeCurrentGame()" title="Oyunu Alta Al (Esc)">−</button>
+                        <button type="button" class="game-win-btn game-win-leave-btn" onclick="promptLeaveCurrentGame()" title="Masadan Ayrıl">✕</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ana İçerik -->
+            <div style="padding: 12px 16px; display: flex; flex-direction: column; align-items: center; position: relative;">
+                
+                <!-- İzleyici Bilgilendirme Rozeti -->
+                <div id="chessSpectatorBanner" style="display: none; width: 100%; justify-content: center; align-items: center; gap: 8px; background: rgba(234, 179, 8, 0.15); border: 1px solid #eab308; border-radius: 8px; padding: 4px 10px; margin-bottom: 8px; font-size: 11px; font-weight: 800; color: #facc15;">
+                    <span>👁️ İzleyici Modu (Yancısınız) - İki oyuncunun hamleleri ve süreleri canlı aktarılıyor.</span>
+                </div>
+
+                <!-- Üst Oyuncu Bilgi & Saat Çubuğu (Rakip) -->
+                <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 6px 12px; margin-bottom: 8px; box-sizing: border-box;">
+                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                        <div id="chessTopPlayerName" style="font-weight: 800; font-size: 13px; color: #f8fafc; display: flex; align-items: center;">Rakip Bekleniyor...</div>
+                        <div id="chessTopCaptured" style="display: flex; gap: 2px; font-size: 14px; min-height: 18px; color: #cbd5e1;"></div>
+                    </div>
+                    <div id="chessTopClock" class="chess-digital-clock">10:00</div>
+                </div>
+
+                <!-- Durum / Şah / Bildirim Metni -->
+                <div id="chessStatusText" style="text-align: center; font-size: 13px; font-weight: 800; min-height: 20px; margin-bottom: 6px;">
+                    <span style="color: #38bdf8;">🟢 Oyun Hazırlanıyor...</span>
+                </div>
+
+                <!-- 8x8 Satranç Tahtası -->
+                <div class="chess-board-wrapper">
+                    <div id="chessBoardGrid" class="chess-board-grid"></div>
+                </div>
+
+                <!-- Alt Oyuncu Bilgi & Saat Çubuğu (Sen / Alt Taraf) -->
+                <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 6px 12px; margin-top: 8px; box-sizing: border-box;">
+                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                        <div id="chessBottomPlayerName" style="font-weight: 800; font-size: 13px; color: #f8fafc; display: flex; align-items: center;">Sen</div>
+                        <div id="chessBottomCaptured" style="display: flex; gap: 2px; font-size: 14px; min-height: 18px; color: #cbd5e1;"></div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <button type="button" onclick="resignChess()" style="padding: 5px 10px; background: rgba(239, 68, 68, 0.18); border: 1px solid #ef4444; color: #fca5a5; border-radius: 6px; font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.15s;" title="Teslim Ol (Oyunu Terk Et)">🏳️ Terk Et</button>
+                        <div id="chessBottomClock" class="chess-digital-clock">10:00</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Piyon Terfi (Promotion) Seçim Pop-Up Modalı -->
+            <div id="chessPromotionModal" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 7, 18, 0.88); z-index: 100; justify-content: center; align-items: center; backdrop-filter: blur(6px); border-radius: 18px;">
+                <div style="background: linear-gradient(135deg, #1e293b, #0f172a); border: 2px solid #facc15; border-radius: 16px; padding: 20px; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.9);">
+                    <div style="font-size: 15px; font-weight: 900; color: #facc15; margin-bottom: 12px;">👑 Piyon Terfisi (Taş Seçin)</div>
+                    <div id="chessPromotionPieces" style="display: flex; gap: 12px; justify-content: center;"></div>
+                </div>
+            </div>
+
+            <!-- Rövanş & Oyun Sonu Paneli -->
+            <div id="chessRematchOverlay" style="display: none; position: absolute; bottom: 14px; left: 16px; right: 16px; background: rgba(15, 23, 42, 0.95); border: 1.5px solid #facc15; border-radius: 14px; padding: 12px 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); z-index: 50; flex-direction: column; align-items: center; gap: 8px;">
+                <div id="chessRematchVotesText" style="font-size: 13px; font-weight: bold; color: #f8fafc;">Karşılaşma Tamamlandı</div>
+                <div style="display: flex; gap: 10px; width: 100%; justify-content: center;">
+                    <button type="button" onclick="voteChessRematch()" style="flex: 1.2; padding: 9px 14px; background: linear-gradient(135deg, #facc15, #eab308); color: #0f172a; border: none; border-radius: 8px; font-weight: 900; font-size: 13px; cursor: pointer; box-shadow: 0 4px 12px rgba(250, 204, 21, 0.35);">🔄 Rövanş İste</button>
+                    <button type="button" onclick="leaveChessGame()" style="flex: 1; padding: 9px 14px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer;">Masadan Ayrıl</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
     <!-- GÖSTERGE BİLDİRİM TOASTI -->
     <div id="gostergeRevealBanner" class="gosterge-reveal-banner"></div>
 
@@ -3182,5 +3277,6 @@
     <script src="js/xoxGame.js?v=2"></script>
     <script src="js/amiralBatti.js?v=2"></script>
     <script src="js/dostKazigi.js?v=3"></script>
+    <script src="js/chessGameUI.js?v=1"></script>
 </body>
 </html>

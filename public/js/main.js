@@ -858,6 +858,8 @@ function resetAllTableUIs() {
     if (xoxModal) xoxModal.style.display = 'none';
     const amiralModal = document.getElementById('amiralBattiModal');
     if (amiralModal) amiralModal.style.display = 'none';
+    const chessModal = document.getElementById('chessModal');
+    if (chessModal) chessModal.style.display = 'none';
     const bArea = document.getElementById('billiardArea');
     if (bArea) bArea.style.display = 'none';
     const batakArea = document.getElementById('batakArea');
@@ -895,6 +897,10 @@ function getOpenGameModal() {
     const amiral = document.getElementById('amiralBattiModal');
     if (amiral && amiral.style.display !== 'none' && amiral.style.display !== '') {
         return { id: 'amiralBattiModal', type: 'flex', name: '⚓ Amiral Battı' };
+    }
+    const chess = document.getElementById('chessModal');
+    if (chess && chess.style.display !== 'none' && chess.style.display !== '') {
+        return { id: 'chessModal', type: 'flex', name: '♟️ Satranç' };
     }
     const game = document.getElementById('gameModal');
     if (game && game.style.display !== 'none' && game.style.display !== '') {
@@ -1160,7 +1166,8 @@ const cafeTables = [
     { id: 'billiard', x: 35, y: 110, w: 145, h: 78, name: '8-Ball Bilardo' },
     { id: 'tavla', x: 62, y: 300, w: 105, h: 74, name: 'Geleneksel Tavla' },
     { id: 'xox', x: 239, y: 120, w: 86, h: 74, name: 'XOX Düellosu' },
-    { id: 'amiral', x: 476, y: 120, w: 92, h: 74, name: 'Amiral Battı' }
+    { id: 'amiral', x: 476, y: 120, w: 92, h: 74, name: 'Amiral Battı' },
+    { id: 'chess', x: 650, y: 220, w: 96, h: 74, name: 'Satranç Masası' }
 ];
 
 // Dedenin Yeri Kumarhanesindeki Canlı Masalar

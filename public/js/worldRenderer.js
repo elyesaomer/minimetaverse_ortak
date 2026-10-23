@@ -417,6 +417,8 @@ function drawCafeEnvironment() {
             drawXoxTableObj(t.x, t.y, t.w, t.h, isHover);
         } else if (t.id === 'amiral') {
             drawAmiralBattiTableObj(t.x, t.y, t.w, t.h, isHover);
+        } else if (t.id === 'chess') {
+            drawChessTableObj(t.x, t.y, t.w, t.h, isHover);
         } else if (t.id === 'batak') {
             drawBatakTableObj(t.x + Math.round(t.w / 2), t.y + Math.round(t.h / 2), 40, 3, "Gömmeli Batak", isHover);
         } else if (t.id === 'batak4') {
@@ -912,6 +914,163 @@ function drawAmiralBattiTableObj(x, y, w, h, isHover) {
         ctx.fillStyle = "#4ade80";
         ctx.font = "bold 10px sans-serif";
         ctx.fillText("⚓ Amiral Battı Oyna (Tıkla)", cx, y - 13 + bounce);
+    }
+    ctx.restore();
+}
+
+// SATRANÇ MASASI ÇİZİMİ (Klasik Ahşap Masa, Kakma 8x8 Tahta & Çift LCD Satranç Saati)
+function drawChessTableObj(x, y, w, h, isHover) {
+    ctx.save();
+    let cx = x + w / 2;
+    let cy = y + h / 2;
+
+    // 1. Koltuklar / Sandalyeler (Kuzey & Güney Sandalyeleri)
+    [y - 12, y + h + 4].forEach((sy, idx) => {
+        // Sandalye gölgesi
+        ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
+        ctx.beginPath();
+        ctx.roundRect(cx - 18, sy + 3, 36, 12, 4);
+        ctx.fill();
+
+        // Sandalye ahşap gövde
+        ctx.fillStyle = "#2d1606";
+        ctx.beginPath();
+        ctx.roundRect(cx - 19, sy, 38, 12, 4);
+        ctx.fill();
+        ctx.strokeStyle = "#ca8a04";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Deri / Kumaş minder (Üst koltuk siyah, alt koltuk beyaz/krem)
+        ctx.fillStyle = (idx === 0) ? "#1e293b" : "#f1f5f9";
+        ctx.beginPath();
+        ctx.roundRect(cx - 15, sy + 2, 30, 8, 3);
+        ctx.fill();
+    });
+
+    // 2. Masa Taban Gölgesi
+    ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+    ctx.beginPath();
+    ctx.roundRect(x + 5, y + 8, w - 10, h - 8, 12);
+    ctx.fill();
+
+    // 3. Hover Parlama Aurası (Zengin Altın Sarısı)
+    if (isHover) {
+        ctx.strokeStyle = "rgba(250, 204, 21, 0.55)";
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.roundRect(x - 2, y - 2, w + 4, h + 4, 12);
+        ctx.stroke();
+    }
+
+    // 4. Masanın Ahşap Gövdesi (Koyu Maun & Cilalı Ceviz)
+    ctx.fillStyle = "#351a08";
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, 10);
+    ctx.fill();
+    ctx.strokeStyle = isHover ? "#facc15" : "#854d0e";
+    ctx.lineWidth = isHover ? 2.5 : 1.8;
+    ctx.stroke();
+
+    // Masanın Ahşap Kenar Detayı (Pirinç İşlemeler)
+    ctx.fillStyle = "#ca8a04";
+    ctx.fillRect(x + 3, y + 3, 5, 5);
+    ctx.fillRect(x + w - 8, y + 3, 5, 5);
+    ctx.fillRect(x + 3, y + h - 8, 5, 5);
+    ctx.fillRect(x + w - 8, y + h - 8, 5, 5);
+
+    // 5. Kakma 8x8 Satranç Tahtası (Doğal Akçaağaç & Ceviz Ahşap Dokusu)
+    let bSize = 56;
+    let bx = cx - bSize / 2 + 5; // Saate yer bırakmak için hafif sağa ofset
+    let by = cy - bSize / 2;
+    let sqSize = bSize / 8; // 7px kare boyutu
+
+    // Tahta ahşap çerçevesi
+    ctx.fillStyle = "#1e1005";
+    ctx.beginPath();
+    ctx.roundRect(bx - 2, by - 2, bSize + 4, bSize + 4, 3);
+    ctx.fill();
+
+    // 8x8 Damalı Kareler (Ahşap Kakma Dokusu: Açık Akçaağaç & Koyu Ceviz)
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            let isLight = (r + c) % 2 === 0;
+            ctx.fillStyle = isLight ? "#eedcb6" : "#9a6339";
+            ctx.fillRect(bx + c * sqSize, by + r * sqSize, sqSize, sqSize);
+        }
+    }
+
+    // 6. Minyatür 3D Satranç Taşları
+    // Siyah taşlar (Üst sıra r=0, r=1)
+    for (let c = 0; c < 8; c++) {
+        ctx.fillStyle = "#1e293b";
+        ctx.beginPath();
+        ctx.arc(bx + c * sqSize + sqSize / 2, by + 1.5 * sqSize, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#0f172a";
+        ctx.fillRect(bx + c * sqSize + 1.5, by + 0.3 * sqSize, sqSize - 3, sqSize - 2);
+    }
+    // Beyaz taşlar (Alt sıra r=6, r=7)
+    for (let c = 0; c < 8; c++) {
+        ctx.fillStyle = "#f8fafc";
+        ctx.beginPath();
+        ctx.arc(bx + c * sqSize + sqSize / 2, by + 6.5 * sqSize, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#e2e8f0";
+        ctx.fillRect(bx + c * sqSize + 1.5, by + 7.3 * sqSize, sqSize - 3, sqSize - 2);
+    }
+
+    // 7. Dijital Satranç Saati (Masada sol tarafta)
+    let clkX = x + 7;
+    let clkY = cy - 14;
+    let clkW = 11;
+    let clkH = 28;
+
+    // Saat kutusu
+    ctx.fillStyle = "#0f172a";
+    ctx.beginPath();
+    ctx.roundRect(clkX, clkY, clkW, clkH, 2);
+    ctx.fill();
+    ctx.strokeStyle = "#475569";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Üst butonlar (klasik eğik satranç saati butonları)
+    ctx.fillStyle = "#ef4444";
+    ctx.fillRect(clkX + 2, clkY - 2, 3, 2);
+    ctx.fillStyle = "#22c55e";
+    ctx.fillRect(clkX + 6, clkY - 3, 3, 3);
+
+    // İki dijital LCD ekran
+    ctx.fillStyle = "#022c22";
+    ctx.fillRect(clkX + 2, clkY + 3, 7, 9);
+    ctx.fillStyle = "#10b981";
+    ctx.fillRect(clkX + 3, clkY + 6, 5, 3);
+
+    ctx.fillStyle = "#022c22";
+    ctx.fillRect(clkX + 2, clkY + 15, 7, 9);
+    ctx.fillStyle = "#10b981";
+    ctx.fillRect(clkX + 3, clkY + 18, 5, 3);
+
+    // 8. Masa Başlığı ve Hover Rozeti
+    ctx.fillStyle = isHover ? "#facc15" : "#ffffff";
+    ctx.font = "bold 11px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("♟️ Satranç Masası ⏱️", cx, y + h + 15);
+
+    if (isHover) {
+        let bounce = Math.sin(Date.now() / 180) * 3;
+        ctx.fillStyle = "rgba(15, 23, 42, 0.95)";
+        ctx.strokeStyle = "#facc15";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.roundRect(cx - 75, y - 28 + bounce, 150, 22, 6);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#facc15";
+        ctx.font = "bold 10px sans-serif";
+        ctx.fillText("♟️ Satranç Oyna (Tıkla)", cx, y - 13 + bounce);
     }
     ctx.restore();
 }

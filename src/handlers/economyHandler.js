@@ -555,11 +555,17 @@ function registerEconomyHandlers(io, socket, players, helpers) {
             .map(([name, wins]) => ({ name, wins }))
             .sort((a, b) => b.wins - a.wins).slice(0, 5);
 
+        let topChess = Object.entries(dataManager.persistentData.leaderboard.chess || {})
+            .filter(([name]) => isHuman(name))
+            .map(([name, wins]) => ({ name, wins }))
+            .sort((a, b) => b.wins - a.wins).slice(0, 5);
+
         socket.emit('leaderboardData', {
             billiard: topBilliard,
             batak: topBatak,
             tavla: topTavla,
-            okey101: topOkey101
+            okey101: topOkey101,
+            chess: topChess
         });
     });
 

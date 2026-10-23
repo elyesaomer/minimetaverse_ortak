@@ -18,7 +18,10 @@ const STATIC_ROOM_SEATS = {
         { x: 282, y: 212, facing: 'up', label: 'XOX Sandalyesi', game: 'xox', tableId: 'xox' },
         // Amiral Battı Masası Sandalyeleri (x: 476, y: 120, w: 92, h: 74 - cx: 522, cy: 157)
         { x: 522, y: 102, facing: 'down', label: 'Amiral Battı Sandalyesi', game: 'amiral', tableId: 'amiral' },
-        { x: 522, y: 212, facing: 'up', label: 'Amiral Battı Sandalyesi', game: 'amiral', tableId: 'amiral' }
+        { x: 522, y: 212, facing: 'up', label: 'Amiral Battı Sandalyesi', game: 'amiral', tableId: 'amiral' },
+        // Satranç Masası Sandalyeleri (x: 650, y: 220, w: 96, h: 74 - cx: 698, cy: 257)
+        { x: 698, y: 198, facing: 'down', label: 'Satranç Sandalyesi', game: 'chess', tableId: 'chess', seatIndex: 0 },
+        { x: 698, y: 316, facing: 'up', label: 'Satranç Sandalyesi', game: 'chess', tableId: 'chess', seatIndex: 1 }
     ],
     nargile_cafe: [
         // Sol Üst Nargile Locası (Chesterfield Sedir)
@@ -294,7 +297,7 @@ function openGameForSeat(seat) {
                 }, 150);
             }
         }
-    } else if (gameType === 'batak' || gameType === 'batak4' || gameType === 'tavla' || gameType === 'okey101' || gameType === 'okey101_tekli' || gameType === 'billiard' || gameType === 'xox' || gameType === 'amiral' || gameType === 'dost_kazigi' || gameType === 'dost_kazigi_3p') {
+    } else if (gameType === 'batak' || gameType === 'batak4' || gameType === 'tavla' || gameType === 'chess' || gameType === 'okey101' || gameType === 'okey101_tekli' || gameType === 'billiard' || gameType === 'xox' || gameType === 'amiral' || gameType === 'dost_kazigi' || gameType === 'dost_kazigi_3p') {
         if (window.socket) {
             window.socket.emit('requestTableOptions', gameType);
         } else if (gameType === 'xox' && typeof openXoxModal === 'function') {

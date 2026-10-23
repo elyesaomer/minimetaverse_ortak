@@ -1516,7 +1516,7 @@
     "Elyesa": {
       "_id": "6ad3f0c9435135d09468fd7c",
       "username": "Elyesa",
-      "money": 2002796,
+      "money": 2001356,
       "gender": "male",
       "auth": {
         "hash": "2c4e1c2934b78d3cc80bd5bd12278faa269f8b53a37b29acce0f3324accd6bfe",
@@ -7655,6 +7655,150 @@
       "houses": {},
       "furnitureInventory": [],
       "propInventory": {}
+    },
+    "TestBeyaz2532": {
+      "username": "TestBeyaz2532",
+      "money": 1000,
+      "gender": "male",
+      "auth": {
+        "hash": "f63867587943abfdc83f3370c3f1c50edc3fe3a4ca4a28147d1d2e17673f34d1",
+        "salt": "d6c76db82e4827c14c0586b62918fa57"
+      },
+      "role": "user",
+      "isAdmin": false,
+      "isMod": false,
+      "avatar": {
+        "model": "classic_2",
+        "hat": "bere",
+        "face": "none",
+        "skinColor": "#ffd1a4",
+        "shirtColor": "#3b82f6",
+        "color": "#3b82f6",
+        "heldItem": "none",
+        "shoes": "sneakers"
+      },
+      "inventory": [
+        "hats_bere",
+        "skins_#facc15",
+        "shirts_#3b82f6",
+        "shoes_sneakers",
+        "face_none",
+        "props_none"
+      ],
+      "friends": [],
+      "friendRequests": [],
+      "house": null,
+      "houses": {},
+      "furnitureInventory": [],
+      "propInventory": {}
+    },
+    "TestSiyah2532": {
+      "username": "TestSiyah2532",
+      "money": 1000,
+      "gender": "female",
+      "auth": {
+        "hash": "25f56af437d1a9094daaceac1a4989af7c79080642a9031816970d30857e1f0a",
+        "salt": "e8ea5f8d3acb967be2e0a8be487b124c"
+      },
+      "role": "user",
+      "isAdmin": false,
+      "isMod": false,
+      "avatar": {
+        "model": "classic_2",
+        "hat": "hair_long",
+        "face": "none",
+        "skinColor": "#ffd1a4",
+        "shirtColor": "dress_pink",
+        "color": "dress_pink",
+        "heldItem": "none",
+        "shoes": "flats"
+      },
+      "inventory": [
+        "hats_hair_long",
+        "skins_#ffd1a4",
+        "shirts_dress_pink",
+        "shoes_flats",
+        "face_none",
+        "props_none"
+      ],
+      "friends": [],
+      "friendRequests": [],
+      "house": null,
+      "houses": {},
+      "furnitureInventory": [],
+      "propInventory": {}
+    },
+    "TestSolo4984": {
+      "username": "TestSolo4984",
+      "money": 1000,
+      "gender": "male",
+      "auth": {
+        "hash": "55afe6426cf21ec61f82002e7cfc73c2375f4939499ac58b0420a144d36d1421",
+        "salt": "ce1c0357d81c9f81e6aa839ed5f79fd8"
+      },
+      "role": "user",
+      "isAdmin": false,
+      "isMod": false,
+      "avatar": {
+        "model": "classic_2",
+        "hat": "bere",
+        "face": "none",
+        "skinColor": "#ffd1a4",
+        "shirtColor": "#3b82f6",
+        "color": "#3b82f6",
+        "heldItem": "none",
+        "shoes": "sneakers"
+      },
+      "inventory": [
+        "hats_bere",
+        "skins_#facc15",
+        "shirts_#3b82f6",
+        "shoes_sneakers",
+        "face_none",
+        "props_none"
+      ],
+      "friends": [],
+      "friendRequests": [],
+      "house": null,
+      "houses": {},
+      "furnitureInventory": [],
+      "propInventory": {}
+    },
+    "TestSolo7634": {
+      "username": "TestSolo7634",
+      "money": 1000,
+      "gender": "male",
+      "auth": {
+        "hash": "259a4928b04e2ecb7b5fde8c0eb9a6c86c261633c4cd4972dd0039475f75f9a2",
+        "salt": "39714ac45a44c708c3832375797c81f6"
+      },
+      "role": "user",
+      "isAdmin": false,
+      "isMod": false,
+      "avatar": {
+        "model": "classic_2",
+        "hat": "bere",
+        "face": "none",
+        "skinColor": "#ffd1a4",
+        "shirtColor": "#3b82f6",
+        "color": "#3b82f6",
+        "heldItem": "none",
+        "shoes": "sneakers"
+      },
+      "inventory": [
+        "hats_bere",
+        "skins_#facc15",
+        "shirts_#3b82f6",
+        "shoes_sneakers",
+        "face_none",
+        "props_none"
+      ],
+      "friends": [],
+      "friendRequests": [],
+      "house": null,
+      "houses": {},
+      "furnitureInventory": [],
+      "propInventory": {}
     }
   },
   "leaderboard": {
@@ -7682,6 +7826,9 @@
     },
     "amiral": {
       "yasin": 1
+    },
+    "chess": {
+      "Elyesa": 2
     }
   }
 }

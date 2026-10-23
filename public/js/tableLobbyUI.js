@@ -52,6 +52,11 @@
                 dkModeCont.style.display = isDeckGame ? 'flex' : 'none';
             }
 
+            const chessTimeCont = document.getElementById('newTableChessTimeModeContainer');
+            if (chessTimeCont) {
+                chessTimeCont.style.display = (data.baseType === 'chess') ? 'flex' : 'none';
+            }
+
             if (title) title.innerText = `${data.baseName} Masaları`;
             if (list) {
                 list.innerHTML = "";
@@ -71,6 +76,12 @@
                         modeBadge = `<span style="display:inline-block; margin-left:6px; background:rgba(59,130,246,0.25); border:1px solid #3b82f6; color:#60a5fa; font-size:11px; font-weight:800; padding:2px 8px; border-radius:12px;">👥 Eşli</span>`;
                     } else if (t.mode === 'tekli') {
                         modeBadge = `<span style="display:inline-block; margin-left:6px; background:rgba(100,116,139,0.25); border:1px solid #64748b; color:#cbd5e1; font-size:11px; font-weight:800; padding:2px 8px; border-radius:12px;">👤 Tekli</span>`;
+                    }
+
+                    if (t.timeMode === 'untimed') {
+                        modeBadge += `<span style="display:inline-block; margin-left:6px; background:rgba(168,85,247,0.25); border:1px solid #a855f7; color:#c084fc; font-size:11px; font-weight:800; padding:2px 8px; border-radius:12px;">♾️ Süresiz</span>`;
+                    } else if (t.timeMode === '10m' || t.baseType === 'chess') {
+                        modeBadge += `<span style="display:inline-block; margin-left:6px; background:rgba(234,179,8,0.25); border:1px solid #eab308; color:#facc15; font-size:11px; font-weight:800; padding:2px 8px; border-radius:12px;">⏱️ 10 Dk</span>`;
                     }
 
                     if (t.isActive) {
@@ -202,9 +213,12 @@
             const betVal = betSelect ? (parseInt(betSelect.value) || 0) : 0;
             const modeSelect = document.getElementById('newTable101ModeSelect');
             const dkModeSelect = document.getElementById('newTableDostKazigiModeSelect');
+            const chessTimeSelect = document.getElementById('newTableChessTimeModeSelect');
             let is101 = (bType === 'okey101' || bType === 'okey101_tekli');
             let isDeckGame = (bType === 'dost_kazigi' || bType === 'dost_kazigi_3p');
+            let isChess = (bType === 'chess');
             let dkModeVal = (isDeckGame && dkModeSelect) ? dkModeSelect.value : null;
+            let chessTimeVal = (isChess && chessTimeSelect) ? chessTimeSelect.value : (isChess ? '10m' : null);
             let defaultMode = (bType === 'okey101_tekli') ? 'tekli' : (is101 ? 'esli' : (isDeckGame ? dkModeVal : null));
             const modeVal = isDeckGame ? dkModeVal : ((is101 && modeSelect) ? modeSelect.value : defaultMode);
 
@@ -216,7 +230,8 @@
                 baseType: bType, 
                 bet: betVal, 
                 mode: modeVal, 
-                deckMode: isDeckGame ? dkModeVal : null 
+                deckMode: isDeckGame ? dkModeVal : null,
+                timeMode: chessTimeVal
             });
             // NOT: gameModal'ı önceden hemen açmıyoruz. Sunucu isteği onaylayıp
             // updateTableLobby yayını yaptığında modal otomatik ve sorunsuz açılacaktır.

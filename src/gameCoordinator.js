@@ -9,6 +9,7 @@ const okey101Engine = require('./engines/okey101.js');
 const xoxEngine = require('./engines/xox.js');
 const amiralEngine = require('./engines/amiral.js');
 const dostKazigiEngine = require('./engines/dostKazigi.js');
+const chessEngine = require('./engines/chessEngine.js');
 
 const dataManager = require('./dataManager');
 const tableManager = require('./tableManager');
@@ -61,7 +62,12 @@ const {
     sendAmiralUpdate,
     handleAmiralVoteRematch,
     xoxBotTimers,
-    amiralBotTimers
+    amiralBotTimers,
+    chessBotTimers,
+    chessClockIntervals,
+    clearChessTimers,
+    sendChessUpdate,
+    handleChessVoteRematch
 } = require('./coordinators/boardGameCoordinator');
 
 const {
@@ -152,6 +158,16 @@ function getDostKazigiInstance(socketId) {
     return null;
 }
 
+function getChessInstance(socketId) {
+    for (let gid in activeGames) {
+        let g = activeGames[gid];
+        if (gid.startsWith('chess') && g && g.players && g.players.includes(socketId)) {
+            return { game: g, engine: chessEngine, gameId: gid };
+        }
+    }
+    return null;
+}
+
 // --- MASA BAŞLATMA ---
 function startGameForTable(tableId, table, room, io, players) {
     let bet = table.bet || 0;
@@ -182,6 +198,7 @@ function startGameForTable(tableId, table, room, io, players) {
     let isOkey101 = table.baseType === 'okey101' || table.baseType === 'okey101_tekli';
     let isXox = table.baseType === 'xox';
     let isAmiral = table.baseType === 'amiral';
+    let isChess = table.baseType === 'chess';
     let isDostKazigi = table.baseType === 'dost_kazigi' || table.baseType === 'dost_kazigi_3p';
 
     if (isBatak3 || isBatak4) {
@@ -367,6 +384,31 @@ function startGameForTable(tableId, table, room, io, players) {
         });
         sendAmiralUpdate(activeGames[tableId], io);
     }
+    else if (isChess) {
+        let timeMode = table.timeMode || '10m';
+        let newGame = chessEngine.startChessGame(table.players, { tableId: tableId, timeMode: timeMode, bet: bet, pot: pot });
+        newGame.tableId = tableId;
+        newGame.bet = bet;
+        newGame.pot = pot;
+        newGame.timeMode = timeMode;
+        newGame.paidPlayers = { ...paidPlayers };
+        newGame.spectators = [];
+        newGame.disconnectedPlayers = {};
+        newGame.playerProfiles = {};
+        table.players.forEach(pid => {
+            newGame.playerProfiles[pid] = {
+                name: players[pid] ? players[pid].name : "Oyuncu",
+                color: players[pid] ? players[pid].color : "#fff",
+                isBot: !!players[pid]?.isBot
+            };
+        });
+
+        activeGames[tableId] = newGame;
+        activeGames[tableId].players.forEach((pid) => {
+            if (!pid.startsWith('bot_')) io.to(pid).emit('startGame', 'chess');
+        });
+        sendChessUpdate(activeGames[tableId], io);
+    }
     else if (isDostKazigi) {
         let deckMode = table.deckMode || table.mode || 'tek_deste';
         let newGame = dostKazigiEngine.startDostKazigiGame(table.players, 1, null, 0, deckMode);
@@ -406,6 +448,7 @@ module.exports = {
     getOkey101Instance,
     getXoxInstance,
     getAmiralInstance,
+    getChessInstance,
     getDostKazigiInstance,
     startBatakAfkTimer,
     makeBatakAiMove,
@@ -416,10 +459,12 @@ module.exports = {
     handleBilliardVoteRematch,
     handleXoxVoteRematch,
     handleAmiralVoteRematch,
+    handleChessVoteRematch,
     sendTavlaUpdate,
     sendOkey101Update,
     sendXoxUpdate,
     sendAmiralUpdate,
+    sendChessUpdate,
     startOkey101AfkTimer,
     startNextOkey101Round,
     checkOkey101RoundEnd,
@@ -433,6 +478,7 @@ module.exports = {
     batak4Engine,
     xoxEngine,
     amiralEngine,
+    chessEngine,
     dostKazigiEngine,
     dostKazigiAfkTimers,
     startDostKazigiAfkTimer,
@@ -446,6 +492,9 @@ module.exports = {
     billiardBotTimers,
     xoxBotTimers,
     amiralBotTimers,
+    chessBotTimers,
+    chessClockIntervals,
+    clearChessTimers,
     tableCleanupTimers,
     clearTableCleanupTimer,
     startVoidHandVote,

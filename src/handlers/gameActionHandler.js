@@ -15,7 +15,7 @@ function handlePlayerLeaveTable(io, players, targetSocket, silent = false) {
     for (let gid in activeGames) {
         let g = activeGames[gid];
         if (g && g.players && g.players.includes(sid)) {
-            let isDuel = (g.players && g.players.length === 2) || (tables[gid] && tables[gid].min === 2) || gid.startsWith('xox') || gid.startsWith('amiral') || gid.startsWith('tavla') || gid.startsWith('billiard');
+            let isDuel = (g.players && g.players.length === 2) || (tables[gid] && tables[gid].min === 2) || gid.startsWith('xox') || gid.startsWith('amiral') || gid.startsWith('chess') || gid.startsWith('tavla') || gid.startsWith('billiard');
 
             if (isDuel) {
                 // 2 kişilik düello veya mini oyunlarda biri ayrıldığında oyun devam edemez:
@@ -39,6 +39,9 @@ function handlePlayerLeaveTable(io, players, targetSocket, silent = false) {
                 if (gameCoordinator.tavlaBotTimers && gameCoordinator.tavlaBotTimers[gid]) {
                     clearTimeout(gameCoordinator.tavlaBotTimers[gid]);
                     delete gameCoordinator.tavlaBotTimers[gid];
+                }
+                if (gameCoordinator.clearChessTimers) {
+                    gameCoordinator.clearChessTimers(gid);
                 }
                 if (gameCoordinator.tableCleanupTimers && gameCoordinator.tableCleanupTimers[gid]) {
                     clearTimeout(gameCoordinator.tableCleanupTimers[gid]);
@@ -229,7 +232,7 @@ function handlePlayerLeaveTable(io, players, targetSocket, silent = false) {
     // Lobiden çıkış
     let affected = tableManager.removePlayerFromLobbies(sid);
     affected.forEach(t => {
-        let isDuelTable = t.min === 2 || ['xox', 'amiral', 'tavla', 'billiard'].includes(t.baseType);
+        let isDuelTable = t.min === 2 || ['xox', 'amiral', 'chess', 'tavla', 'billiard'].includes(t.baseType);
         if (isDuelTable) {
             t.players.forEach(pid => {
                 if (!pid.startsWith('bot_')) {
@@ -392,8 +395,8 @@ function registerGameActionHandlers(io, socket, players) {
         );
 
         let isDuel = (
-            (game && (game.players.length === 2 || game.tableId?.startsWith('xox') || game.tableId?.startsWith('amiral') || game.tableId?.startsWith('tavla') || game.tableId?.startsWith('billiard'))) ||
-            (table && (table.min === 2 || ['xox', 'amiral', 'tavla', 'billiard'].includes(table.baseType) || table.id?.startsWith('xox') || table.id?.startsWith('amiral') || table.id?.startsWith('tavla') || table.id?.startsWith('billiard')))
+            (game && (game.players.length === 2 || game.tableId?.startsWith('xox') || game.tableId?.startsWith('amiral') || game.tableId?.startsWith('chess') || game.tableId?.startsWith('tavla') || game.tableId?.startsWith('billiard'))) ||
+            (table && (table.min === 2 || ['xox', 'amiral', 'chess', 'tavla', 'billiard'].includes(table.baseType) || table.id?.startsWith('xox') || table.id?.startsWith('amiral') || table.id?.startsWith('chess') || table.id?.startsWith('tavla') || table.id?.startsWith('billiard')))
         );
 
         let isParticipant = (
@@ -424,7 +427,7 @@ function registerGameActionHandlers(io, socket, players) {
         if (!game.spectators) game.spectators = [];
         if (!game.spectators.includes(socket.id)) game.spectators.push(socket.id);
 
-        let gameType = tableId.startsWith('billiard') ? 'billiard' : (tableId.startsWith('tavla') ? 'tavla' : (tableId.startsWith('okey101') ? 'okey101' : (tableId.startsWith('xox') ? 'xox' : (tableId.startsWith('amiral') ? 'amiral' : 'batak'))));
+        let gameType = tableId.startsWith('billiard') ? 'billiard' : (tableId.startsWith('chess') ? 'chess' : (tableId.startsWith('tavla') ? 'tavla' : (tableId.startsWith('okey101') ? 'okey101' : (tableId.startsWith('xox') ? 'xox' : (tableId.startsWith('amiral') ? 'amiral' : 'batak')))));
         socket.emit('startGame', gameType);
 
         if (gameType === 'batak') {
@@ -452,6 +455,8 @@ function registerGameActionHandlers(io, socket, players) {
             gameCoordinator.sendXoxUpdate(game, io);
         } else if (gameType === 'amiral') {
             gameCoordinator.sendAmiralUpdate(game, io);
+        } else if (gameType === 'chess') {
+            gameCoordinator.sendChessUpdate(game, io);
         }
 
         io.to(tableId).emit('systemMessage', `👁️ ${players[socket.id]?.name || "Biri"} masayı izlemeye başladı.`);
@@ -672,6 +677,36 @@ function registerGameActionHandlers(io, socket, players) {
         let instance = gameCoordinator.getAmiralInstance(socket.id);
         if (instance && instance.game) {
             gameCoordinator.handleAmiralVoteRematch(instance.game, socket.id, true, io, players);
+        }
+    });
+
+    // 9.3. SATRANÇ DİNLEYİCİLERİ
+    socket.on('chessMove', (data) => {
+        let instance = gameCoordinator.getChessInstance(socket.id);
+        if (instance && instance.game && data) {
+            let res = instance.engine.makeChessMove(instance.game, socket.id, data);
+            if (res.success) {
+                gameCoordinator.sendChessUpdate(instance.game, io);
+            } else {
+                socket.emit('gameError', res.message || "Geçersiz satranç hamlesi.");
+            }
+        }
+    });
+
+    socket.on('chessResign', () => {
+        let instance = gameCoordinator.getChessInstance(socket.id);
+        if (instance && instance.game) {
+            let res = instance.engine.resignChessGame(instance.game, socket.id);
+            if (res.success) {
+                gameCoordinator.sendChessUpdate(instance.game, io);
+            }
+        }
+    });
+
+    socket.on('chessVoteRematch', () => {
+        let instance = gameCoordinator.getChessInstance(socket.id);
+        if (instance && instance.game) {
+            gameCoordinator.handleChessVoteRematch(instance.game, socket.id, true, io, players);
         }
     });
 
@@ -1054,7 +1089,7 @@ function registerGameActionHandlers(io, socket, players) {
         players[socket.id].room = "kafe";
         socket.join("kafe");
 
-        let gameType = tableId.startsWith('billiard') ? 'billiard' : (tableId.startsWith('tavla') ? 'tavla' : (tableId.startsWith('okey101') ? 'okey101' : (tableId.startsWith('xox') ? 'xox' : (tableId.startsWith('amiral') ? 'amiral' : (tableId.startsWith('dost_kazigi') ? 'dost_kazigi' : 'batak')))));
+        let gameType = tableId.startsWith('billiard') ? 'billiard' : (tableId.startsWith('chess') ? 'chess' : (tableId.startsWith('tavla') ? 'tavla' : (tableId.startsWith('okey101') ? 'okey101' : (tableId.startsWith('xox') ? 'xox' : (tableId.startsWith('amiral') ? 'amiral' : (tableId.startsWith('dost_kazigi') ? 'dost_kazigi' : 'batak'))))));
         socket.emit('startGame', gameType);
 
         if (gameType === 'batak') {
@@ -1067,6 +1102,8 @@ function registerGameActionHandlers(io, socket, players) {
             gameCoordinator.sendXoxUpdate(game, io);
         } else if (gameType === 'amiral') {
             gameCoordinator.sendAmiralUpdate(game, io);
+        } else if (gameType === 'chess') {
+            gameCoordinator.sendChessUpdate(game, io);
         } else if (gameType === 'dost_kazigi') {
             gameCoordinator.sendDostKazigiUpdate(game, io, players);
         } else if (gameType === 'billiard') {
@@ -1308,7 +1345,7 @@ function registerGameActionHandlers(io, socket, players) {
         players[socket.id].room = "kafe";
         socket.join("kafe");
 
-        let gameType = tableId.startsWith('billiard') ? 'billiard' : (tableId.startsWith('tavla') ? 'tavla' : (tableId.startsWith('okey101') ? 'okey101' : (tableId.startsWith('xox') ? 'xox' : (tableId.startsWith('amiral') ? 'amiral' : (tableId.startsWith('dost_kazigi') ? 'dost_kazigi' : 'batak')))));
+        let gameType = tableId.startsWith('billiard') ? 'billiard' : (tableId.startsWith('chess') ? 'chess' : (tableId.startsWith('tavla') ? 'tavla' : (tableId.startsWith('okey101') ? 'okey101' : (tableId.startsWith('xox') ? 'xox' : (tableId.startsWith('amiral') ? 'amiral' : (tableId.startsWith('dost_kazigi') ? 'dost_kazigi' : 'batak'))))));
         socket.emit('startGame', gameType);
 
         if (gameType === 'batak') {
@@ -1321,6 +1358,8 @@ function registerGameActionHandlers(io, socket, players) {
             gameCoordinator.sendXoxUpdate(game, io);
         } else if (gameType === 'amiral') {
             gameCoordinator.sendAmiralUpdate(game, io);
+        } else if (gameType === 'chess') {
+            gameCoordinator.sendChessUpdate(game, io);
         } else if (gameType === 'dost_kazigi') {
             gameCoordinator.sendDostKazigiUpdate(game, io, players);
         } else if (gameType === 'billiard') {

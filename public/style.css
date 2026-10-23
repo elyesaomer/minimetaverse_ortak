@@ -204,7 +204,8 @@ body {
 #dailyQuestsModal > div,
 #reconnectPromptModal > div,
 #xoxModalContent,
-#amiralBattiModalContent {
+#amiralBattiModalContent,
+#chessModalContent {
     animation: overlayFadeIn 0.16s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     will-change: transform, opacity;
 }
@@ -4943,4 +4944,198 @@ body {
 .dk-action-btn.btn-neutral {
     background: linear-gradient(135deg, #475569, #334155);
     color: white;
+}
+
+/* ==========================================================================
+   SATRANÇ (CHESS) ARAYÜZ, 8x8 TAHTA & DİJİTAL SAAT STİLLERİ
+   ========================================================================== */
+
+.chess-board-wrapper {
+    display: inline-block;
+    padding: 12px;
+    background: linear-gradient(145deg, #381f12 0%, #29150b 50%, #1e0d06 100%);
+    border: 4px solid #5a3018;
+    border-radius: 12px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85), inset 0 2px 4px rgba(255, 215, 160, 0.18), inset 0 -2px 6px rgba(0, 0, 0, 0.7);
+}
+
+.chess-board-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 54px);
+    grid-template-rows: repeat(8, 54px);
+    border: 3px solid #231208;
+    border-radius: 4px;
+    overflow: hidden;
+    user-select: none;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.65);
+}
+
+@media (max-width: 600px) {
+    .chess-board-grid {
+        grid-template-columns: repeat(8, 40px);
+        grid-template-rows: repeat(8, 40px);
+    }
+}
+
+.chess-square {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.12s ease;
+}
+
+/* Doğal Açık Ahşap (Akçaağaç / Huş Dokusu) */
+.chess-square.light {
+    background: linear-gradient(135deg, #eedcb6 0%, #e6d0a4 45%, #e1c898 100%);
+    box-shadow: inset 0 0 4px rgba(200, 160, 100, 0.25);
+}
+
+/* Zengin Koyu Ahşap (Ceviz / Gül Ağacı Kakma Dokusu) */
+.chess-square.dark {
+    background: linear-gradient(135deg, #aa7246 0%, #9a6339 50%, #8a542d 100%);
+    box-shadow: inset 0 0 5px rgba(60, 30, 10, 0.35);
+}
+
+.chess-square.selected-square {
+    background: linear-gradient(135deg, #fcd34d 0%, #f59e0b 100%) !important;
+    box-shadow: inset 0 0 0 2px #b45309, 0 0 12px rgba(245, 158, 11, 0.6) !important;
+}
+
+.chess-square.last-move-highlight {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.6) 0%, rgba(217, 119, 6, 0.5) 100%) !important;
+}
+
+.chess-square.king-in-check {
+    background: radial-gradient(circle, rgba(239, 68, 68, 0.95) 0%, rgba(220, 38, 38, 0.5) 60%, transparent 100%) !important;
+    animation: pulseCheck 1s infinite alternate;
+}
+
+.legal-move-dot {
+    width: 16px;
+    height: 16px;
+    background: rgba(40, 20, 5, 0.35);
+    border-radius: 50%;
+    pointer-events: none;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.legal-capture-target {
+    box-shadow: inset 0 0 0 4.5px rgba(185, 28, 28, 0.55);
+}
+
+.chess-coord {
+    position: absolute;
+    font-size: 10px;
+    font-weight: 800;
+    pointer-events: none;
+    user-select: none;
+    line-height: 1;
+}
+
+.chess-coord.rank-coord {
+    top: 2px;
+    left: 3px;
+}
+
+.chess-coord.file-coord {
+    bottom: 2px;
+    right: 3px;
+}
+
+.chess-square.light .chess-coord {
+    color: #78421d;
+}
+
+.chess-square.dark .chess-coord {
+    color: #f7e6ca;
+}
+
+.chess-piece-wrapper {
+    width: 88%;
+    height: 88%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.45));
+    transition: transform 0.12s ease;
+}
+
+.chess-square:hover .chess-piece-wrapper {
+    transform: scale(1.1) translateY(-1px);
+}
+
+.chess-digital-clock {
+    background: #090d16;
+    border: 2px solid #334155;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #64748b;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 86px;
+    transition: all 0.2s ease;
+}
+
+.chess-digital-clock.active-clock {
+    color: #22c55e;
+    border-color: #22c55e;
+    box-shadow: 0 0 16px rgba(34, 197, 94, 0.35), inset 0 2px 6px rgba(0, 0, 0, 0.8);
+}
+
+.chess-digital-clock.low-time {
+    color: #ef4444 !important;
+    border-color: #ef4444 !important;
+    animation: pulseLowTime 0.8s infinite alternate;
+}
+
+@keyframes pulseLowTime {
+    0% { box-shadow: 0 0 8px rgba(239, 68, 68, 0.3); }
+    100% { box-shadow: 0 0 22px rgba(239, 68, 68, 0.85); }
+}
+
+@keyframes pulseCheck {
+    0% { opacity: 0.95; }
+    100% { opacity: 0.55; }
+}
+
+.chess-active-pill {
+    background: rgba(34, 197, 94, 0.25);
+    border: 1px solid #22c55e;
+    color: #4ade80;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-left: 6px;
+}
+
+.chess-promo-choice-btn {
+    background: rgba(15, 23, 42, 0.9);
+    border: 1.5px solid rgba(250, 204, 21, 0.4);
+    border-radius: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.chess-promo-choice-btn:hover {
+    transform: scale(1.08);
+    border-color: #facc15;
+    box-shadow: 0 6px 18px rgba(250, 204, 21, 0.35);
+    background: rgba(30, 41, 59, 0.95);
 }

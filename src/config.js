@@ -24,7 +24,8 @@ module.exports = {
         okey101: { min: 4, name: '101 Okey (Çiftli / Eşli)', type: 'okey101', mode: 'esli' },
         okey101_tekli: { min: 4, name: '101 Okey (Tekli)', type: 'okey101_tekli', mode: 'tekli' },
         dost_kazigi: { min: 4, name: 'Dost kazığı (4 kişilik)', type: 'dost_kazigi', mode: 'tek_deste', deckMode: 'tek_deste' },
-        dost_kazigi_3p: { min: 3, name: 'Dost kazığı (3 kişilik)', type: 'dost_kazigi_3p', mode: 'tek_deste', deckMode: 'tek_deste' }
+        dost_kazigi_3p: { min: 3, name: 'Dost kazığı (3 kişilik)', type: 'dost_kazigi_3p', mode: 'tek_deste', deckMode: 'tek_deste' },
+        chess: { min: 2, name: 'Satranç', type: 'chess' }
     },
 
     // Varsayılan Masalar
@@ -35,6 +36,7 @@ module.exports = {
         tavla: { id: 'tavla', baseType: 'tavla', name: 'Klasik Tavla', min: 2, bet: 0, pot: 0, players: [], spectators: [] },
         xox: { id: 'xox', baseType: 'xox', name: 'XOX Düellosu', min: 2, bet: 0, pot: 0, players: [], spectators: [] },
         amiral: { id: 'amiral', baseType: 'amiral', name: 'Amiral Battı', min: 2, bet: 0, pot: 0, players: [], spectators: [] },
+        chess: { id: 'chess', baseType: 'chess', name: 'Satranç Masası', min: 2, bet: 0, pot: 0, timeMode: '10m', players: [], spectators: [] },
         okey101: { id: 'okey101', baseType: 'okey101', name: '101 Okey (Çiftli / Eşli)', min: 4, bet: 0, pot: 0, mode: 'esli', players: [], spectators: [] },
         okey101_tekli: { id: 'okey101_tekli', baseType: 'okey101_tekli', name: '101 Okey (Tekli)', min: 4, bet: 0, pot: 0, mode: 'tekli', players: [], spectators: [] },
         dost_kazigi: { id: 'dost_kazigi', baseType: 'dost_kazigi', name: 'Dost kazığı (4 kişilik)', min: 4, bet: 0, pot: 0, mode: 'tek_deste', deckMode: 'tek_deste', players: [], spectators: [] },

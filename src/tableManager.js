@@ -88,6 +88,7 @@ function getTableOptionsList(baseType, activeGames = {}, players = {}) {
                 bet: t.bet || 0,
                 mode: t.mode || (t.baseType === 'okey101_tekli' ? 'tekli' : (t.baseType === 'okey101' ? 'esli' : ((t.baseType === 'dost_kazigi' || t.baseType === 'dost_kazigi_3p') ? (t.deckMode || 'tek_deste') : null))),
                 deckMode: t.deckMode || t.mode || ((t.baseType === 'dost_kazigi' || t.baseType === 'dost_kazigi_3p') ? 'tek_deste' : null),
+                timeMode: t.timeMode || (t.baseType === 'chess' ? '10m' : null),
                 pot: (t.bet || 0) * t.min,
                 count: isGameActive ? t.min : t.players.length,
                 isActive: isGameActive,
@@ -172,6 +173,8 @@ function createNewTable(payload, activeGames = {}, creator = {}) {
         ? `${customName} (${baseConf.name})` 
         : `${baseConf.name} #${Object.keys(tables).filter(k => tables[k].baseType === baseType).length + 1}`;
 
+    let timeMode = payload.timeMode || (baseType === 'chess' ? '10m' : null);
+
     tables[uniqueId] = {
         id: uniqueId,
         baseType: baseType,
@@ -181,6 +184,7 @@ function createNewTable(payload, activeGames = {}, creator = {}) {
         pot: 0,
         mode: mode,
         deckMode: deckMode,
+        timeMode: timeMode,
         players: [],
         spectators: [],
         creatorId: creatorSocketId || null,
