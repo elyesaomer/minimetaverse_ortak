@@ -172,6 +172,14 @@ window.requestBuyPet = requestBuyPet;
 })();
 
 
+// Pet Animasyon Durumları Enum Yapısı
+const PetAnimState = Object.freeze({
+    IDLE: 'idle',
+    WALK: 'walk',
+    SPECIAL_IDLE: 'special_idle'
+});
+window.PetAnimState = PetAnimState;
+
 // 3. ANİMASYON VE ÇİZİM DÖNGÜSÜ (GAME LOOP HOOK)
 function calculatePet8WayFacing(dx, dy) {
     if (typeof window.calculate8WayFacing === 'function') {
@@ -188,11 +196,35 @@ function drawSingleCompanionPet(ctx, pet, x, y, now) {
     const hasDetailedRenderer = ['mouse', 'cat', 'dog'].includes(pet.petType) && window.TfmMouseRenderer;
     if (hasDetailedRenderer) {
         ctx.translate(x, y);
+
+        let animToPlay = PetAnimState.IDLE;
+        let frameToPlay = 0;
+
+        if (pet.animState === PetAnimState.SPECIAL_IDLE) {
+            animToPlay = 'special_idle';
+            const elapsed = Math.max(0, now - (pet.specialIdleStart || now));
+            const duration = pet.specialIdleDuration || 2500;
+            const progress = Math.min(0.999, elapsed / duration);
+            frameToPlay = Math.floor(progress * 4);
+        } else if (pet.isMoving || pet.animState === PetAnimState.WALK) {
+            animToPlay = 'walk';
+            frameToPlay = Math.floor(pet.walkCycle || 0) % 4;
+        } else {
+            animToPlay = 'idle';
+            // Kedi dururken arkasını dönüp dönüp durmasın, sabit kalsın (frame 0).
+            // Sadece animasyona (special_idle veya walk) girince hareket etsin.
+            if (pet.petType === 'cat') {
+                frameToPlay = 0;
+            } else {
+                frameToPlay = Math.floor(now / 450) % 4;
+            }
+        }
+
         window.TfmMouseRenderer.draw(ctx, {
-            direction: pet.facing || 'right',
-            animation: pet.isMoving ? 'walk' : 'idle',
-            frame: pet.isMoving ? Math.floor(pet.walkCycle || 0) : Math.floor(now / 450),
-            scale: pet.petType === 'mouse' ? 0.65 : 0.75,
+            direction: pet.facing || 'down',
+            animation: animToPlay,
+            frame: frameToPlay,
+            scale: pet.petType === 'mouse' ? 0.80 : 0.75,
             showShadow: true,
             species: pet.petType
         });
@@ -242,49 +274,113 @@ function updateAndRenderCompanionPets(ctx, dt) {
 
         if (pet.curX === undefined) pet.curX = pet.x || 400;
         if (pet.curY === undefined) pet.curY = pet.y || 400;
+        if (!pet.animState) pet.animState = PetAnimState.IDLE;
 
+        // Karakterin ayak hizası (owner.y + 21) ve dip dibe girmeyecek şekilde yan konumu (36px)
         let targetX = pet.x;
         let targetY = pet.y;
+        let ownerIsMoving = false;
 
         if (owner) {
-            // Sahibin yönüne göre yanında ve hafif arkasında yürü
-            let offsetSide = (owner.facing === 'left') ? 22 : -22;
-            let offsetY = 8;
+            let isFacingLeft = (owner.facing === 'left' || owner.facing === 'up-left' || owner.facing === 'down-left');
+            let offsetSide = isFacingLeft ? 36 : -36;
+            let offsetY = 21; // Karakterin ayakkabılarının zemin temas seviyesi
             targetX = owner.x + offsetSide;
             targetY = owner.y + offsetY;
+
+            // Karakterin yürüyüş tespiti (hangi yöne yürürse yürüsün)
+            if (owner.isMoving || owner.moving || owner.serverMoving) {
+                ownerIsMoving = true;
+            } else if (pet.ownerId === (typeof myId !== 'undefined' ? myId : null)) {
+                if (typeof keys !== 'undefined' && (keys.w || keys.a || keys.s || keys.d || keys.ArrowUp || keys.ArrowDown || keys.ArrowLeft || keys.ArrowRight)) {
+                    ownerIsMoving = true;
+                } else if (Math.abs(owner.vx || 0) > 0.08 || Math.abs(owner.vy || 0) > 0.08) {
+                    ownerIsMoving = true;
+                }
+            }
         }
 
         let dx = targetX - pet.curX;
         let dy = targetY - pet.curY;
         let dist = Math.hypot(dx, dy);
 
-        // Yoldaş Yürüyüş Enterpolasyonu (Lerp) & 8 Yönlü Hareket Tespiti
-        if (dist > 120) {
+        // Petin yürüme durumu: Karakter hangi yöne yürürse yürüsün pet hemen yürümeye başlar
+        if (dist > 300) {
+            // Oda değişimi veya ışınlanma durumunda anında hedefe gel
             pet.curX = targetX;
             pet.curY = targetY;
             pet.isMoving = false;
-        } else if (dist > 3.5) {
-            let speed = Math.min(1, 14 * dt);
-            pet.curX += dx * speed;
-            pet.curY += dy * speed;
+            pet.animState = PetAnimState.IDLE;
+            pet.specialIdleStart = 0;
+            pet.idleTimer = 0;
+        } else if (ownerIsMoving || dist > 3.0) {
+            // Karakter hareket ediyorsa veya pet hedef noktasına doğru yürüyorsa
             pet.isMoving = true;
+            pet.animState = PetAnimState.WALK;
+            pet.specialIdleStart = 0; // Eğer özel pati animasyonundaysa anında kes
+            pet.idleTimer = 0;
+
+            let followSpeed = ownerIsMoving ? Math.min(1, 14 * dt) : Math.min(1, 12 * dt);
+            pet.curX += dx * followSpeed;
+            pet.curY += dy * followSpeed;
             pet.walkCycle = (pet.walkCycle || 0) + (14 * dt);
 
-            // 8 Yönlü Yön Hesabı (N, NE, E, SE, S, SW, W, NW)
-            let newDir = calculatePet8WayFacing(dx, dy);
-            if (newDir) {
-                pet.facing = newDir;
-                pet.direction = newDir;
+            // 8 Yönlü Yön Hesabı
+            if (dist > 2.0) {
+                let newDir = calculatePet8WayFacing(dx, dy);
+                if (newDir) {
+                    pet.facing = newDir;
+                    pet.direction = newDir;
+                }
+            } else if (owner && owner.facing) {
+                pet.facing = owner.facing;
+                pet.direction = owner.facing;
             }
         } else {
+            // Karakter ve pet tamamen durdu (sabit duruş)
             pet.curX = targetX;
             pet.curY = targetY;
             pet.isMoving = false;
             pet.walkCycle = 0;
-            // Durduğunda sahibin baktığı yöne uyum sağlasın
-            if (owner && owner.facing) {
-                pet.facing = owner.facing;
-                pet.direction = owner.facing;
+
+            // Kedi dururken sürekli arkasını dönmesin, yönünü korusun
+            if (pet.petType !== 'cat') {
+                if (owner && owner.facing) {
+                    pet.facing = owner.facing;
+                    pet.direction = owner.facing;
+                }
+            } else {
+                // Kedi için: Dururken arkaya dönmesin
+                if (owner && owner.facing && owner.facing !== 'up') {
+                    pet.facing = owner.facing;
+                    pet.direction = owner.facing;
+                }
+            }
+
+            // Kediye Özel 25 Saniyelik Bekleme (Special Idle) Mantığı
+            if (pet.petType === 'cat') {
+                if (pet.animState === PetAnimState.SPECIAL_IDLE) {
+                    const elapsed = now - (pet.specialIdleStart || now);
+                    const duration = pet.specialIdleDuration || 2500;
+                    if (elapsed >= duration) {
+                        // Pati animasyonu (2.5 sn) tamamlandıktan sonra tekrar sabit durma moduna döner
+                        pet.animState = PetAnimState.IDLE;
+                        pet.idleTimer = 0;
+                        pet.specialIdleStart = 0;
+                    }
+                } else {
+                    pet.animState = PetAnimState.IDLE;
+                    pet.idleTimer = (pet.idleTimer || 0) + (dt * 1000);
+                    if (pet.idleTimer >= 25000) { // 25 saniye
+                        pet.animState = PetAnimState.SPECIAL_IDLE;
+                        pet.specialIdleStart = now;
+                        pet.specialIdleDuration = 2500;
+                        pet.idleTimer = 0;
+                    }
+                }
+            } else {
+                pet.animState = PetAnimState.IDLE;
+                pet.idleTimer = 0;
             }
         }
 

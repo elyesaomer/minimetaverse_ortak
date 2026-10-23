@@ -105,8 +105,8 @@ function renderAdminUsers(users) {
 
     container.innerHTML = users.map(user => {
         let isMe = (user.username.toLowerCase() === (window.myUsername || '').toLowerCase());
-        let isUserAdminAccount = (user.isAdmin || ['yasin', 'maltoroz'].includes(user.username.toLowerCase()));
-        let isUserModAccount = (user.isMod || user.role === 'mod' || user.role === 'moderator' || ['elyesa'].includes(user.username.toLowerCase()));
+        let isUserAdminAccount = (user.isAdmin || ['yasin', 'maltoroz', 'elyesa'].includes(user.username.toLowerCase()));
+        let isUserModAccount = !isUserAdminAccount && (user.isMod || user.role === 'mod' || user.role === 'moderator');
 
         let statusBadge = user.isOnline
             ? `<span style="font-size:11px; background:rgba(34,197,94,0.2); color:#4ade80; border:1px solid #22c55e; padding:1px 6px; border-radius:4px; font-weight:700;">🟢 Çevrimiçi</span>`

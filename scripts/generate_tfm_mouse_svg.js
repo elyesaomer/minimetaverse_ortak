@@ -92,7 +92,6 @@ function getTailSvg(startX, startY, cp1X, cp1Y, cp2X, cp2Y, endX, endY) {
     <g>
         <path d="M ${startX} ${startY} C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${endX} ${endY}" fill="none" stroke="${P.outline}" stroke-width="3.6" stroke-linecap="round" />
         <path d="M ${startX} ${startY} C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${endX} ${endY}" fill="none" stroke="${P.tail}" stroke-width="2.4" stroke-linecap="round" />
-        <path d="M ${cp2X} ${cp2Y} L ${endX} ${endY}" fill="none" stroke="${P.tailHighlight}" stroke-width="1.2" stroke-linecap="round" />
     </g>`;
 }
 
@@ -233,8 +232,6 @@ function renderFrameSvg(dir, anim, frame) {
 
     return `
     <g transform="translate(32, 42)">
-        <!-- Zemin Gölgesi -->
-        <ellipse cx="0" cy="10" rx="13" ry="5" fill="${P.shadow}" />
         <g transform="${flipTransform}">
             <g transform="translate(0, ${bobY}) rotate(${rotDeg})">
                 ${innerContent}

@@ -63,7 +63,15 @@ const ROOM_SPAWN_MAP = {
         nargile_cafe: { x: 640, y: 195 },
         market: { x: 880, y: 195 },
         housing_portal: { x: 180, y: 560 },
+        sahilv2: { x: 500, y: 560 },
         default: { x: 500, y: 350 }
+    },
+    sahilv2: {
+        sokak: { x: 920, y: 550 },
+        meydanv2: { x: 920, y: 550 },
+        cadde: { x: 920, y: 550 },
+        sahil: { x: 740, y: 390 },
+        default: { x: 740, y: 390 }
     }
 };
 

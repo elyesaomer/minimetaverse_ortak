@@ -318,6 +318,190 @@ body {
     transform: scale(0.97);
 }
 
+/* Standard Game Window Control Buttons (Minimize '-' and Leave Red 'X') */
+.game-window-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 6px;
+}
+
+.game-win-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+    border: 1px solid;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+    box-sizing: border-box;
+    padding: 0;
+    line-height: 1;
+}
+
+.game-win-min-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.22);
+    color: #cbd5e1;
+}
+
+.game-win-min-btn:hover {
+    background: rgba(56, 189, 248, 0.3);
+    border-color: #38bdf8;
+    color: #ffffff;
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 2px 8px rgba(56, 189, 248, 0.4);
+}
+
+.game-win-min-btn:active {
+    transform: translateY(0) scale(0.95);
+}
+
+.game-win-leave-btn {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border-color: #f87171;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+}
+
+.game-win-leave-btn:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    border-color: #ef4444;
+    color: #ffffff;
+    transform: translateY(-1px) scale(1.08);
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.65);
+}
+
+.game-win-leave-btn:active {
+    transform: translateY(0) scale(0.95);
+}
+
+/* Floating Minimized Game Dock (Ekranın sağ altında gezerken oyun widget'ı) */
+#minimizedGameDock {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 29999;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.92));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1.5px solid #38bdf8;
+    border-radius: 999px;
+    padding: 8px 16px 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.75), 0 0 20px rgba(56, 189, 248, 0.25);
+    cursor: pointer;
+    animation: dockPopIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    user-select: none;
+}
+
+#minimizedGameDock:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85), 0 0 25px rgba(56, 189, 248, 0.4);
+    border-color: #7dd3fc;
+}
+
+.min-dock-pulse {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 8px #22c55e, 0 0 16px #4ade80;
+    animation: pulseDot 1.5s infinite;
+    flex-shrink: 0;
+}
+
+@keyframes pulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.min-dock-info {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.min-dock-badge {
+    font-size: 9px;
+    font-weight: 800;
+    color: #38bdf8;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+.min-dock-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: #ffffff;
+    max-width: 170px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.min-dock-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.min-dock-restore-btn {
+    background: linear-gradient(135deg, #38bdf8, #0284c7);
+    color: #ffffff;
+    border: none;
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s ease;
+    box-shadow: 0 2px 6px rgba(56, 189, 248, 0.3);
+}
+
+.min-dock-restore-btn:hover {
+    transform: scale(1.05);
+    background: linear-gradient(135deg, #7dd3fc, #0284c7);
+}
+
+.min-dock-leave-btn {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #f87171;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.min-dock-leave-btn:hover {
+    background: #ef4444;
+    color: #ffffff;
+    transform: scale(1.1);
+}
+
+@keyframes dockPopIn {
+    0% { transform: translateY(20px) scale(0.9); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
 #errorToast { 
     color: white; 
     background: linear-gradient(135deg, #ef4444, #dc2626); 
@@ -4341,43 +4525,44 @@ body {
 }
 .xox-board-container {
     display: grid;
-    grid-template-columns: repeat(3, 76px);
-    grid-template-rows: repeat(3, 76px);
-    gap: 8px;
-    background: rgba(15, 23, 42, 0.7);
-    padding: 10px;
-    border-radius: 14px;
-    border: 1.5px solid rgba(56, 189, 248, 0.25);
-    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+    grid-template-columns: repeat(3, 110px);
+    grid-template-rows: repeat(3, 110px);
+    gap: 14px;
+    background: rgba(15, 23, 42, 0.85);
+    padding: 16px;
+    border-radius: 18px;
+    border: 2px solid rgba(56, 189, 248, 0.35);
+    box-shadow: inset 0 3px 15px rgba(0, 0, 0, 0.6), 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 .xox-cell {
-    background: rgba(30, 41, 59, 0.85);
-    border: 1.5px solid rgba(255, 255, 255, 0.12);
-    border-radius: 10px;
+    background: rgba(30, 41, 59, 0.9);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    border-radius: 16px;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 38px;
+    font-size: 58px;
     font-weight: 900;
     cursor: pointer;
     user-select: none;
-    transition: all 0.15s ease;
+    transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .xox-cell:hover:empty {
-    background: rgba(56, 189, 248, 0.15);
-    border-color: rgba(56, 189, 248, 0.5);
-    transform: scale(1.02);
+    background: rgba(56, 189, 248, 0.22);
+    border-color: rgba(56, 189, 248, 0.6);
+    transform: scale(1.05);
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
 }
 .xox-cell.x {
     color: #38bdf8;
-    text-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+    text-shadow: 0 0 16px rgba(56, 189, 248, 0.85);
 }
 .xox-cell.o {
     color: #f43f5e;
-    text-shadow: 0 0 12px rgba(244, 63, 94, 0.8);
+    text-shadow: 0 0 16px rgba(244, 63, 94, 0.85);
 }
 .xox-cell.winning-cell {
-    background: rgba(250, 204, 21, 0.25) !important;
+    background: rgba(250, 204, 21, 0.28) !important;
     border-color: #facc15 !important;
     animation: winPulse 0.8s infinite alternate ease-in-out;
 }
@@ -4394,7 +4579,7 @@ body {
     gap: 3px;
     width: 100%;
     aspect-ratio: 1 / 1;
-    max-width: 275px;
+    max-width: 290px;
     margin: 0 auto;
     background: rgba(5, 15, 30, 0.9);
     padding: 6px;
@@ -4418,6 +4603,18 @@ body {
     border-color: #ef4444;
     cursor: crosshair;
     transform: scale(1.08);
+}
+.naval-cell.placement-preview-valid {
+    background: rgba(34, 197, 94, 0.45) !important;
+    border-color: #22c55e !important;
+    cursor: pointer !important;
+    transform: scale(1.06);
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+}
+.naval-cell.placement-preview-invalid {
+    background: rgba(239, 68, 68, 0.45) !important;
+    border-color: #ef4444 !important;
+    cursor: not-allowed !important;
 }
 .naval-cell.has-ship {
     background: rgba(34, 197, 94, 0.25);

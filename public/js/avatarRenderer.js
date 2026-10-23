@@ -1544,10 +1544,9 @@ function getAvatarSmokingState(p, isPreview = false) {
 
     let now = Date.now();
     if (!p._nextSmokeTime) {
-        // 40 saniye ile 2 dakika arası RNG (40000ms - 120000ms)
-        let minDelay = isPreview ? 8000 : 40000;
-        let maxDelay = isPreview ? 25000 : 120000;
-        p._nextSmokeTime = now + minDelay + Math.random() * (maxDelay - minDelay);
+        // Dümdüz 35 saniye bekleme süresi
+        let delay = isPreview ? 8000 : 35000;
+        p._nextSmokeTime = now + delay;
     }
 
     if (now >= p._nextSmokeTime && !p._smokeAnimStart) {
@@ -1561,7 +1560,7 @@ function getAvatarSmokingState(p, isPreview = false) {
 
     if (elapsed >= totalDuration) {
         p._smokeAnimStart = null;
-        p._nextSmokeTime = now + 40000 + Math.random() * 80000;
+        p._nextSmokeTime = now + (isPreview ? 8000 : 35000);
         return null;
     }
 
@@ -4001,13 +4000,15 @@ function drawRealistic25dHair(ctx, pX, pY, p, facing) {
 function drawRealistic25dAvatar(ctx, pX, pY, p, facing, isSitting, legSwing, isPreview) {
     let skinPalette = getRealisticSkinPalette(p.skinColor);
 
-    // 1. Zemin Gölgesi (Canlı ambient occlusion)
-    ctx.save();
-    ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
-    ctx.beginPath();
-    ctx.ellipse(pX, pY + (isSitting ? 16 : 21.5), isSitting ? 14 : 12, isSitting ? 5.5 : 5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+    // 1. Zemin Gölgesi (Canlı ambient occlusion - Kuğu veya binek atı varken binek kendi gölgesini çizer)
+    if (!p.hasSwanBoat && !p.hasHorse) {
+        ctx.save();
+        ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
+        ctx.beginPath();
+        ctx.ellipse(pX, pY + (isSitting ? 16 : 21.5), isSitting ? 14 : 12, isSitting ? 5.5 : 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
 
     // 2. Bacaklar, Kamuflaj Kargo Şort ve Sneaker Ayakkabılar
     drawRealistic25dLegs(ctx, pX, pY, p, facing, isSitting, legSwing, skinPalette);
@@ -4540,15 +4541,30 @@ function drawAvatarPreview() {
 
 // --- 8. ANİMASYONLU VE ÇOK OYUNCULU OYUNCU ÇİZİM MOTORU ---
 function drawAnimatedPlayer(p, id) {
-    let isSitting = (p.action === 'sitting');
+    let isMounted = !!p.hasHorse;
+    let isRidingSwan = (typeof currentRoom !== 'undefined' && (currentRoom === 'sahil' || currentRoom === 'sahilv2') && p.hasSwanBoat);
+    let isSitting = (p.action === 'sitting' || isRidingSwan || isMounted);
     let playerWalkCycle = (id === myId) ? (typeof walkCycle !== 'undefined' ? walkCycle : (p.walkCycle || 0)) : (p.walkCycle || 0);
     let isMoving = (id === myId) ? (!!p.isMoving || keys.w || keys.a || keys.s || keys.d || Math.abs(p.vx || 0) > 0.05 || Math.abs(p.vy || 0) > 0.05) : !!p.isMoving;
-    if (isSitting) isMoving = false;
+    if (isSitting && !isRidingSwan && !isMounted) isMoving = false;
     let bob = (isMoving && !isSitting) ? Math.sin(playerWalkCycle) * 2.5 : 0;
     let legSwing = (isMoving && !isSitting) ? Math.sin(playerWalkCycle) * 5 : 0;
 
+    let inWater = false;
+    if (typeof currentRoom !== 'undefined') {
+        if (currentRoom === 'sahilv2' && typeof isSahilV2Water === 'function') {
+            inWater = isSahilV2Water(p.x, p.y);
+        } else if (currentRoom === 'sahil') {
+            let onPier = (p.x >= 70 && p.x <= 555 && p.y >= 150 && p.y <= 235);
+            let shoreX = (typeof getBeachShoreX === 'function') ? getBeachShoreX(p.y) : 300;
+            inWater = (p.x < shoreX && !onPier);
+        }
+    }
+    let swanBob = (isRidingSwan && inWater) ? Math.sin(Date.now() / 320) * 2.2 : 0;
+    let gallopBob = isMounted ? (isMoving ? Math.sin(playerWalkCycle * 2) * 2.8 : Math.sin(Date.now() / 400) * 0.8) : 0;
+
     let pX = p.x;
-    let pY = p.y + (isSitting ? 7 : bob);
+    let pY = p.y + (isSitting && !isRidingSwan && !isMounted ? 7 : (isRidingSwan ? -3 + swanBob : (isMounted ? -10 + gallopBob : bob)));
 
     let isDancing = (p.action === 'dance');
     let danceTilt = isDancing ? Math.sin(Date.now() / 140) * 0.15 : 0;
@@ -4560,15 +4576,41 @@ function drawAnimatedPlayer(p, id) {
         ctx.translate(-pX, -pY);
     }
 
-    ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
-    ctx.beginPath();
-    ctx.ellipse(pX, p.y + (isSitting ? 16 : 22), isSitting ? 14 : 12, isSitting ? 5.5 : 5, 0, 0, Math.PI * 2);
-    ctx.fill();
+    if (!isRidingSwan && !isMounted) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+        ctx.beginPath();
+        ctx.ellipse(pX, p.y + (isSitting ? 16 : 22), isSitting ? 14 : 12, isSitting ? 5.5 : 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+    }
 
     const model = p.model === 'sanalika_v2' ? 'sanalika_v2' : 'classic_2';
     let rawFacing = (id === myId) ? myFacing : (p.facing || 'down');
     let facing = normalize8WayFacing(rawFacing);
     let isFemale = isFemaleAvatar(p, p.color, p.hat, p.shoes);
+
+    // BİNEK ATI - Katman 1: Gövde, Arka Bacaklar, Kuyruk ve Eyer (Karakterin arkasında çizilir)
+    if (isMounted && typeof HorseMountRenderer !== 'undefined') {
+        ctx.save();
+        ctx.translate(pX, p.y + 12);
+        ctx.scale(1.15, 1.15);
+        HorseMountRenderer.drawGroundShadow(ctx, isMoving, playerWalkCycle);
+        HorseMountRenderer.drawHorseBase(ctx, facing, isMoving, playerWalkCycle);
+        ctx.restore();
+    }
+
+    // Kuğu Deniz Bisikleti - Katman 1: Tekne Tabanı, Su Dalgaları ve Koltuklar (Karakterin arkasında çizilir)
+    if (isRidingSwan && typeof SwanBoatRenderer !== 'undefined') {
+        ctx.save();
+        ctx.translate(pX, p.y + 6 + swanBob);
+        ctx.scale(1.15, 1.15);
+        if (inWater) {
+            SwanBoatRenderer.drawWaterEffects(ctx, isMoving, Date.now());
+        } else {
+            SwanBoatRenderer.drawGroundShadow(ctx);
+        }
+        SwanBoatRenderer.drawBoatBase(ctx, facing, isMoving, Date.now());
+        ctx.restore();
+    }
 
     if (model === 'sanalika_v2') {
         drawRealistic25dAvatar(ctx, pX, pY, p, facing, isSitting, legSwing, false);
@@ -4655,101 +4697,21 @@ function drawAnimatedPlayer(p, id) {
 
     ctx.restore();
 
-    // 10.0 BİNEK ATI
-    if (p.hasHorse) {
+    // 10.0 BİNEK ATI - Katman 2: Baş, Boyun, Kulaklar, Yele, Dizginler ve Üzengi (Karakterin önünde çizilir)
+    if (p.hasHorse && typeof HorseMountRenderer !== 'undefined') {
         ctx.save();
-        let isMoving = (id === myId) ? (!!p.isMoving || keys.w || keys.a || keys.s || keys.d || Math.abs(p.vx || 0) > 0.05 || Math.abs(p.vy || 0) > 0.05) : !!p.isMoving;
-        let walkCycleVal = (id === myId) ? (typeof walkCycle !== 'undefined' ? walkCycle : (p.walkCycle || 0)) : (p.walkCycle || 0);
-        let gallopBob = isMoving ? Math.sin(walkCycleVal * 2) * 3 : 0;
-        let dir = facing;
-        let flip = (dir === 'left' || dir === 'down-left' || dir === 'up-left') ? -1 : 1;
-
-        ctx.translate(pX, pY + 12 + gallopBob);
-        ctx.scale(flip, 1);
-
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
-        ctx.beginPath(); ctx.ellipse(0, 15, 24, 10, 0, 0, Math.PI * 2); ctx.fill();
-
-        if (isMoving) {
-            ctx.fillStyle = 'rgba(217, 119, 6, 0.45)';
-            ctx.beginPath();
-            ctx.arc(-18 + Math.sin(walkCycleVal) * 3, 13, 4, 0, Math.PI * 2);
-            ctx.arc(-24 - Math.cos(walkCycleVal) * 3, 15, 5, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        let legSwingFront = isMoving ? Math.sin(walkCycleVal * 1.5) * 8 : 0;
-        let legSwingBack = isMoving ? -Math.sin(walkCycleVal * 1.5) * 8 : 0;
-
-        ctx.strokeStyle = '#78350f'; ctx.lineWidth = 4; ctx.lineCap = 'round';
-        ctx.beginPath(); ctx.moveTo(-10, 4); ctx.lineTo(-12 + legSwingBack, 15); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(10, 4); ctx.lineTo(12 + legSwingFront, 15); ctx.stroke();
-
-        ctx.fillStyle = '#1e293b';
-        ctx.fillRect(-14 + legSwingBack, 13, 4, 3);
-        ctx.fillRect(10 + legSwingFront, 13, 4, 3);
-
-        ctx.fillStyle = '#92400e';
-        ctx.beginPath(); ctx.ellipse(0, 2, 22, 12, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = '#78350f'; ctx.lineWidth = 1.5; ctx.stroke();
-
-        let tailWag = isMoving ? Math.sin(walkCycleVal * 2) * 6 : Math.sin(Date.now() / 300) * 2;
-        ctx.strokeStyle = '#451a03'; ctx.lineWidth = 3.5;
-        ctx.beginPath(); ctx.moveTo(-20, 0); ctx.quadraticCurveTo(-28, 4 + tailWag, -25, 14 + tailWag); ctx.stroke();
-
-        ctx.fillStyle = '#92400e';
-        ctx.beginPath();
-        ctx.moveTo(12, -2); ctx.lineTo(19, -17); ctx.lineTo(27, -15); ctx.lineTo(24, 2);
-        ctx.closePath(); ctx.fill(); ctx.stroke();
-
-        ctx.fillStyle = '#78350f';
-        ctx.beginPath(); ctx.ellipse(27, -15, 6, 4.5, 0.2, 0, Math.PI * 2); ctx.fill();
-
-        ctx.fillStyle = '#92400e';
-        ctx.beginPath(); ctx.moveTo(18, -17); ctx.lineTo(20, -24); ctx.lineTo(23, -17); ctx.closePath(); ctx.fill();
-
-        ctx.fillStyle = '#451a03';
-        ctx.beginPath(); ctx.moveTo(14, -4); ctx.lineTo(19, -18); ctx.lineTo(16, -17); ctx.lineTo(11, -3); ctx.closePath(); ctx.fill();
-
-        ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(23, -16, 2.5, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.arc(24, -16, 1.2, 0, Math.PI * 2); ctx.fill();
-
-        ctx.fillStyle = '#d97706';
-        ctx.beginPath(); ctx.roundRect(-8, -4, 16, 8, 3); ctx.fill();
-        ctx.strokeStyle = '#facc15'; ctx.lineWidth = 1; ctx.stroke();
-
-        ctx.strokeStyle = '#b45309'; ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(26, -13); ctx.lineTo(0, -2); ctx.stroke();
-
+        ctx.translate(pX, p.y + 12);
+        ctx.scale(1.15, 1.15);
+        HorseMountRenderer.drawHorseFront(ctx, facing, isMoving, playerWalkCycle);
         ctx.restore();
     }
 
-    // 10.1 KUĞU DENİZ BİSİKLETİ
-    if (typeof currentRoom !== 'undefined' && currentRoom === 'sahil' && p.hasSwanBoat) {
+    // 10.1 KUĞU DENİZ BİSİKLETİ (ÖN KATMAN: Kuğu Boynu, Gaga, Direksiyon ve Ön Pruva)
+    if (isRidingSwan && typeof SwanBoatRenderer !== 'undefined') {
         ctx.save();
-        let swanFlip = (facing === 'left' || facing === 'down-left' || facing === 'up-left') ? -1 : 1;
-        ctx.translate(pX, pY + 16);
-        ctx.scale(swanFlip, 1);
-
-        ctx.fillStyle = "#ffffff";
-        ctx.beginPath(); ctx.ellipse(0, 0, 24, 12, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = "rgba(0,0,0,0.15)"; ctx.lineWidth = 1.5; ctx.stroke();
-
-        ctx.fillStyle = "#ffffff";
-        ctx.beginPath();
-        ctx.moveTo(14, 0); ctx.quadraticCurveTo(24, -18, 18, -24);
-        ctx.lineTo(13, -24); ctx.quadraticCurveTo(16, -12, 10, 0);
-        ctx.closePath(); ctx.fill();
-
-        ctx.fillStyle = "#f97316";
-        ctx.beginPath(); ctx.moveTo(18, -24); ctx.lineTo(24, -21); ctx.lineTo(18, -19); ctx.closePath(); ctx.fill();
-
-        ctx.fillStyle = "#000000";
-        ctx.beginPath(); ctx.arc(16, -22, 1.5, 0, Math.PI * 2); ctx.fill();
-
-        let ripple = Math.sin(Date.now() / 200) * 2;
-        ctx.strokeStyle = "rgba(255,255,255,0.7)"; ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.arc(0, 4, 26 + ripple, 0, Math.PI * 2); ctx.stroke();
+        ctx.translate(pX, p.y + 6 + swanBob);
+        ctx.scale(1.15, 1.15);
+        SwanBoatRenderer.drawBoatFront(ctx, facing, isMoving, Date.now());
         ctx.restore();
     }
 

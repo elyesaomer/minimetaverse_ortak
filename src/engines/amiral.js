@@ -120,8 +120,34 @@ function setPlayerFleet(gameData, playerId, ships, grid) {
     if (!gameData || gameData.phase !== 'SETUP') return false;
 
     if (ships && ships.length === 4 && grid) {
-        gameData.ships[playerId] = ships.map(s => ({ ...s, hits: 0, sunk: false }));
-        gameData.grids[playerId] = grid;
+        gameData.ships[playerId] = ships.map(s => ({
+            id: s.id,
+            name: s.name,
+            size: s.size,
+            color: s.color,
+            coords: s.coords || [],
+            hits: 0,
+            sunk: false
+        }));
+
+        // Grid hücrelerini standardize et: ship mutlaka string ID olarak saklansın
+        let normalizedGrid = createEmptyGrid();
+        for (let r = 0; r < GRID_SIZE; r++) {
+            for (let c = 0; c < GRID_SIZE; c++) {
+                let cell = grid[r][c];
+                let sId = null;
+                if (cell && cell.ship) {
+                    sId = (typeof cell.ship === 'object' && cell.ship !== null) ? cell.ship.id : cell.ship;
+                }
+                normalizedGrid[r][c] = {
+                    ship: sId,
+                    hit: false,
+                    miss: false,
+                    fired: false
+                };
+            }
+        }
+        gameData.grids[playerId] = normalizedGrid;
     } else {
         const fleet = generateRandomFleet();
         gameData.ships[playerId] = fleet.ships;
@@ -134,7 +160,7 @@ function setPlayerFleet(gameData, playerId, ships, grid) {
     const allReady = gameData.players.every(p => gameData.ready[p] === true);
     if (allReady) {
         gameData.phase = 'BATTLE';
-        gameData.turnIndex = 0;
+        gameData.turnIndex = (gameData.startingTurnIndex !== undefined) ? gameData.startingTurnIndex : 0;
         gameData.turnStartTime = Date.now();
     }
 
@@ -165,7 +191,8 @@ function makeAmiralShot(gameData, playerId, r, c) {
     playerShotGrid[r][c].fired = true;
     gameData.stats[playerId].shots++;
 
-    const oppShipId = gameData.grids[oppId][r][c].ship;
+    const rawShip = gameData.grids[oppId][r][c].ship;
+    const oppShipId = (typeof rawShip === 'object' && rawShip !== null) ? rawShip.id : rawShip;
     let hit = false;
     let sunkShip = null;
 
@@ -182,10 +209,11 @@ function makeAmiralShot(gameData, playerId, r, c) {
             if (hitShip.hits >= hitShip.size) {
                 hitShip.sunk = true;
                 sunkShip = hitShip;
+                playerShotGrid[r][c].sunk = true;
             }
         }
 
-        // Tüm gemiler battı mı kontrol et
+        // Tüm gemiler battı mı kontrol et (4 gemi)
         const allSunk = gameData.ships[oppId].every(s => s.sunk === true);
         if (allSunk) {
             gameData.gameOver = true;
@@ -293,6 +321,7 @@ function passTurn(gameData) {
 module.exports = {
     GRID_SIZE,
     SHIPS_CONFIG,
+    createEmptyGrid,
     startAmiralGame,
     generateRandomFleet,
     setPlayerFleet,

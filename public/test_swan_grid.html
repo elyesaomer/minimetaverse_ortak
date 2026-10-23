@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { background: #1e293b; color: white; font-family: monospace; padding: 20px; }
+  .grid { display: grid; grid-template-columns: repeat(4, 130px); gap: 10px; }
+  .cell { border: 1px solid #475569; padding: 4px; text-align: center; background: #0f172a; border-radius: 6px; }
+  canvas { background: #334155; border-radius: 4px; }
+</style>
+</head>
+<body>
+<h1>Swan Spritesheet - 16 Rows x 4 Cols</h1>
+<div class='grid' id='grid'></div>
+<script>
+const img = new Image();
+img.src = '/assets/vehicles/swan_spritesheet.png';
+img.onload = () => {
+  const cw = img.width / 4;
+  const ch = img.height / 16;
+  const g = document.getElementById('grid');
+  for (let r = 0; r < 16; r++) {
+    for (let c = 0; c < 4; c++) {
+      let div = document.createElement('div');
+      div.className = 'cell';
+      div.innerHTML = '<div style="font-size:11px; margin-bottom:2px;">R' + r + ' C' + c + '</div>';
+      let cv = document.createElement('canvas');
+      cv.width = 85;
+      cv.height = 64;
+      let ctx = cv.getContext('2d');
+      ctx.drawImage(img, c * cw, r * ch, cw, ch, 0, 0, 85, 64);
+      div.appendChild(cv);
+      g.appendChild(div);
+    }
+  }
+};
+</script>
+</body>
+</html>

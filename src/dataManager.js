@@ -193,8 +193,8 @@ async function syncDataJsonToMongo() {
 loadPersistentData();
 
 // --- 3.1 ADMİN KULLANICILARI VE YETKİ KONTROLÜ ---
-const ADMIN_USERS = ['yasin', 'maltoroz'];
-const MOD_USERS = ['elyesa'];
+const ADMIN_USERS = ['yasin', 'maltoroz', 'elyesa'];
+const MOD_USERS = [];
 
 function isUserAdmin(name) {
     if (!name || typeof name !== 'string') return false;

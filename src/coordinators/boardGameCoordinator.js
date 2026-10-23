@@ -233,8 +233,9 @@ function handleXoxVoteRematch(game, pid, vote, io, players = {}) {
         }
 
         let fresh = xoxEngine.startXoxGame(game.players);
+        game.startingTurnIndex = (game.startingTurnIndex !== undefined) ? (1 - game.startingTurnIndex) : 1;
         game.board = fresh.board;
-        game.turnIndex = fresh.turnIndex;
+        game.turnIndex = game.startingTurnIndex;
         game.playerSymbols = fresh.playerSymbols;
         game.winner = null;
         game.winningCombo = null;
@@ -422,12 +423,14 @@ function handleAmiralVoteRematch(game, pid, vote, io, players = {}) {
         }
 
         let fresh = amiralEngine.startAmiralGame(game.players);
+        game.startingTurnIndex = (game.startingTurnIndex !== undefined) ? (1 - game.startingTurnIndex) : 1;
+        fresh.startingTurnIndex = game.startingTurnIndex;
         game.phase = fresh.phase;
         game.ready = fresh.ready;
         game.ships = fresh.ships;
         game.grids = fresh.grids;
         game.shots = fresh.shots;
-        game.turnIndex = fresh.turnIndex;
+        game.turnIndex = game.startingTurnIndex;
         game.winner = null;
         game.gameOver = false;
         game.winnerRecorded = false;

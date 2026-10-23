@@ -132,6 +132,12 @@
                 check: (p, w, h) => p.x >= 845 && p.x <= 910 && p.y <= 165,
                 target: 'market'
             }
+        ],
+        sahilv2: [
+            {
+                check: (p, w, h) => p.x >= 920 && p.y >= 540,
+                target: 'meydanv2'
+            }
         ]
     };
 
@@ -503,6 +509,15 @@
             return false;
         }
 
+        // --- SAHİL V2 (1000x625 DİNAMİK SAHİL & KUĞU KİRALAMA) ---
+        if (currentRoom === "sahilv2") {
+            if (typeof handleSahilV2Click === 'function') {
+                let handled = handleSahilV2Click(clickX, clickY, p);
+                if (handled) return true;
+            }
+            return false;
+        }
+
         // --- PRESTİJ GAYRİMENKUL & EMLAK OFİSİ ---
         if (currentRoom === "emlakci") {
             // Çıkış kapısı
@@ -868,6 +883,14 @@
         if (currentRoom === "meydanv2") {
             if (typeof handleMeydanV2MobileInteract === 'function') {
                 let handled = handleMeydanV2MobileInteract(p);
+                if (handled) return true;
+            }
+            return false;
+        }
+
+        if (currentRoom === "sahilv2") {
+            if (typeof handleSahilV2MobileInteract === 'function') {
+                let handled = handleSahilV2MobileInteract(p);
                 if (handled) return true;
             }
             return false;

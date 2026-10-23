@@ -41,6 +41,12 @@
 
     // Socket Entegrasyonu
     if (socket) {
+        socket.off('amiralUpdate');
+        socket.off('amiralRematchStatus');
+        socket.off('opponentLeft');
+        socket.off('tableLeft');
+        socket.off('tableClosed');
+
         socket.on('amiralUpdate', (data) => {
             if (!data) return;
             if (data.disconnectedPlayers && socket && data.disconnectedPlayers[socket.id]) return;
@@ -114,11 +120,20 @@
             }
         });
 
-        socket.on('opponentLeft', () => {
+        socket.on('opponentLeft', (data) => {
             serverAmiralData = null;
             phase = 'SETUP';
             const modal = document.getElementById('amiralBattiModal');
             if (modal) modal.style.display = 'none';
+            if (typeof window.resetAllTableUIs === 'function') {
+                window.resetAllTableUIs();
+            }
+            let msg = (data && data.message) ? data.message : "Rakip masadan ayrıldı";
+            if (typeof showSocialNotificationToast === 'function') {
+                showSocialNotificationToast('⚠️', 'Masa Kapatıldı', msg);
+            } else if (typeof showFloatingToast === 'function') {
+                showFloatingToast(`⚠️ ${msg}`);
+            }
         });
 
         socket.on('tableLeft', () => {
@@ -126,6 +141,22 @@
             phase = 'SETUP';
             const modal = document.getElementById('amiralBattiModal');
             if (modal) modal.style.display = 'none';
+            if (typeof window.resetAllTableUIs === 'function') {
+                window.resetAllTableUIs();
+            }
+        });
+
+        socket.on('tableClosed', (data) => {
+            let closedId = typeof data === 'object' ? data?.tableId : data;
+            if (!closedId || (serverAmiralData && serverAmiralData.tableId === closedId)) {
+                serverAmiralData = null;
+                phase = 'SETUP';
+                const modal = document.getElementById('amiralBattiModal');
+                if (modal) modal.style.display = 'none';
+                if (typeof window.resetAllTableUIs === 'function') {
+                    window.resetAllTableUIs();
+                }
+            }
         });
     }
 
@@ -209,6 +240,10 @@
 
     function closeAmiralBattiModal() {
         if (socket) {
+            let activeId = serverAmiralData?.tableId || window.currentActiveTableId;
+            if (activeId) {
+                socket.emit('closeTable', { tableId: activeId });
+            }
             socket.emit('leaveTable');
         }
         serverAmiralData = null;
@@ -229,16 +264,17 @@
         selectedShipIndex = 0;
         playerStats = { shots: 0, hits: 0 };
         aiMemory = { mode: 'HUNT', targetStack: [], firstHit: null, currentHits: [] };
+        isReadySent = false;
 
         playerGrid = createEmptyGrid();
         enemyGrid = createEmptyGrid();
         playerShips = [];
         enemyShips = [];
 
-        // Düşman donanmasını otomatik yerleştir
+        // Düşman donanmasını otomatik yerleştir (vs Yapay Zeka modu için)
         enemyShips = deployRandomFleet(enemyGrid);
 
-        // Oyuncu için varsayılan otomatik yerleşim yap
+        // Başlangıçta gemileri hazır rastgele diz (kullanıcı isterse doğrudan başlayabilir veya Temizle diyerek manuel dizebilir)
         playerShips = deployRandomFleet(playerGrid);
 
         updateSetupUI();
@@ -257,9 +293,91 @@
         return grid;
     }
 
+    function getNextShipToPlace() {
+        return SHIPS_CONFIG.find(c => !playerShips.some(s => s.id === c.id));
+    }
+
+    function clearPlacementPreviews() {
+        document.querySelectorAll('#playerBoardGrid .naval-cell').forEach(el => {
+            el.classList.remove('placement-preview-valid', 'placement-preview-invalid');
+        });
+    }
+
+    function clearPlayerFleet() {
+        if (phase !== 'SETUP') return;
+        playerGrid = createEmptyGrid();
+        playerShips = [];
+        selectedShipIndex = 0;
+        isReadySent = false;
+        renderAllGrids();
+        updateSetupUI();
+        showNavalToast("🧹 Donanma temizlendi. Gemileri yerleştirmek için ızgaraya tıklayın.");
+    }
+    window.clearPlayerFleet = clearPlayerFleet;
+
+    function handlePlayerGridCellHover(r, c) {
+        if (phase !== 'SETUP' || isReadySent) return;
+        clearPlacementPreviews();
+        let nextShip = getNextShipToPlace();
+        if (!nextShip) return;
+
+        let canPlace = canPlaceShip(playerGrid, r, c, nextShip.size, currentOrientation);
+        for (let i = 0; i < nextShip.size; i++) {
+            let cr = (currentOrientation === 'V') ? (r + i) : r;
+            let cc = (currentOrientation === 'H') ? (c + i) : c;
+            if (cr >= 0 && cr < GRID_SIZE && cc >= 0 && cc < GRID_SIZE) {
+                let targetCell = document.querySelector(`#playerBoardGrid .naval-cell[data-r="${cr}"][data-c="${cc}"]`);
+                if (targetCell) {
+                    targetCell.classList.add(canPlace ? 'placement-preview-valid' : 'placement-preview-invalid');
+                }
+            }
+        }
+    }
+
+    function handlePlayerGridCellClick(r, c) {
+        if (phase !== 'SETUP' || isReadySent) return;
+        let nextShip = getNextShipToPlace();
+        if (!nextShip) {
+            showNavalToast("Tüm gemiler dizildi! 'Rastgele Diz' veya 'Temizle' ile değiştirebilirsiniz.");
+            return;
+        }
+
+        if (!canPlaceShip(playerGrid, r, c, nextShip.size, currentOrientation)) {
+            playBattleshipSound('miss');
+            showNavalToast("⚠️ Gemi buraya sığmıyor veya diğer gemilere çok yakın!");
+            return;
+        }
+
+        // Gemiyi yerleştir
+        let shipInstance = {
+            id: nextShip.id,
+            name: nextShip.name,
+            size: nextShip.size,
+            color: nextShip.color,
+            coords: [],
+            hits: 0,
+            sunk: false
+        };
+
+        for (let i = 0; i < nextShip.size; i++) {
+            let cr = (currentOrientation === 'V') ? (r + i) : r;
+            let cc = (currentOrientation === 'H') ? (c + i) : c;
+            playerGrid[cr][cc].ship = shipInstance;
+            shipInstance.coords.push({ r: cr, c: cc });
+        }
+
+        playerShips.push(shipInstance);
+        playBattleshipSound('sonar');
+        showNavalToast(`⚓ ${nextShip.name} yerleştirildi!`);
+
+        clearPlacementPreviews();
+        renderAllGrids();
+        updateSetupUI();
+    }
+    window.handlePlayerGridCellClick = handlePlayerGridCellClick;
+
     // Donanmayı Rastgele Yerleştirme
     function deployRandomFleet(grid) {
-        // Grid'i temizle
         for (let r = 0; r < GRID_SIZE; r++) {
             for (let c = 0; c < GRID_SIZE; c++) {
                 grid[r][c] = { ship: null, hit: false, miss: false };
@@ -323,9 +441,10 @@
 
     // Rastgele Yerleştir Butonu
     function handleRandomDeploy() {
-        if (phase !== 'SETUP') return;
+        if (phase !== 'SETUP' || isReadySent) return;
         playerShips = deployRandomFleet(playerGrid);
         playBattleshipSound('sonar');
+        clearPlacementPreviews();
         renderAllGrids();
         updateSetupUI();
     }
@@ -338,21 +457,22 @@
         if (btn) {
             btn.innerHTML = (currentOrientation === 'H') ? '🔄 Yön: Yatay ➔' : '🔄 Yön: Dikey ⬇';
         }
+        clearPlacementPreviews();
     }
     window.toggleOrientation = toggleOrientation;
 
     // Savaşa Başlama Butonu
     function startBattle() {
+        if (playerShips.length !== SHIPS_CONFIG.length) {
+            showNavalToast("⚠️ Lütfen önce 4 geminizin tamamını yerleştirin!");
+            return;
+        }
         if (serverAmiralData) {
             isReadySent = true;
             if (socket) {
                 socket.emit('amiralReady', { ships: playerShips, grid: playerGrid });
             }
             updateSetupUI();
-            return;
-        }
-        if (playerShips.length !== SHIPS_CONFIG.length) {
-            alert("Lütfen önce tüm gemilerinizi yerleştirin!");
             return;
         }
         phase = 'BATTLE';
@@ -666,22 +786,53 @@
         const setupControls = document.getElementById('amiralSetupControls');
         if (setupControls) {
             setupControls.style.display = 'flex';
+            setupControls.style.flexDirection = 'column';
+            setupControls.style.alignItems = 'center';
+            setupControls.style.gap = '10px';
+
             if (serverAmiralData && isReadySent) {
                 setupControls.innerHTML = `
-                    <div style="color:#facc15; font-weight:800; font-size:13px; padding:8px 16px; background:rgba(250,204,21,0.15); border:1px solid #facc15; border-radius:8px;">⏳ Hazırsınız! Rakip donanmanın hazırlanması bekleniyor...</div>
+                    <div style="color:#facc15; font-weight:800; font-size:13px; padding:8px 18px; background:rgba(250,204,21,0.15); border:1px solid #facc15; border-radius:8px;">⏳ Hazırsınız! Rakip donanmanın hazırlanması bekleniyor...</div>
                 `;
             } else {
-                let startBtnText = serverAmiralData ? "🚀 Hazırım / Savaşa Başla!" : "🚀 Muharebeyi Başlat!";
+                let nextShip = getNextShipToPlace();
+                let chipsHtml = SHIPS_CONFIG.map(cfg => {
+                    let placed = playerShips.some(s => s.id === cfg.id);
+                    let isNext = nextShip && nextShip.id === cfg.id;
+                    let border = isNext ? '2px solid #38bdf8' : (placed ? '1px solid #22c55e' : '1px solid rgba(255,255,255,0.2)');
+                    let bg = placed ? 'rgba(34,197,94,0.2)' : (isNext ? 'rgba(56,189,248,0.25)' : 'rgba(0,0,0,0.35)');
+                    let icon = placed ? '✅' : (isNext ? '👉' : '⏳');
+                    return `<div style="display:inline-flex; align-items:center; gap:5px; padding:4px 9px; border-radius:6px; background:${bg}; border:${border}; font-size:11px; font-weight:bold; color:white;">
+                        <span>${icon} ${cfg.name} (${cfg.size}k)</span>
+                    </div>`;
+                }).join('');
+
+                let isAllPlaced = (playerShips.length === SHIPS_CONFIG.length);
+                let startBtnText = serverAmiralData ? (isAllPlaced ? "🚀 Hazırım / Savaşa Başla!" : "⚠️ Önce 4 Gemiyi Dizin") : (isAllPlaced ? "🚀 Muharebeyi Başlat!" : "⚠️ Önce 4 Gemiyi Dizin");
+                let startBtnOpacity = isAllPlaced ? '1' : '0.55';
+                let startBtnCursor = isAllPlaced ? 'pointer' : 'not-allowed';
+
                 setupControls.innerHTML = `
-                    <button type="button" onclick="handleRandomDeploy()" style="padding:8px 16px; background:linear-gradient(135deg, #0284c7, #0369a1); color:white; border:1px solid #38bdf8; border-radius:8px; font-weight:bold; font-size:12px; cursor:pointer;">🎲 Rastgele Diz</button>
-                    <button type="button" id="amiralRotateBtn" onclick="toggleOrientation()" style="padding:8px 16px; background:rgba(30,41,59,0.8); color:#facc15; border:1px solid #facc15; border-radius:8px; font-weight:bold; font-size:12px; cursor:pointer;">🔄 Yön: ${currentOrientation === 'H' ? 'Yatay ➔' : 'Dikey ⬇'}</button>
-                    <button type="button" onclick="startBattle()" style="padding:8px 20px; background:linear-gradient(135deg, #22c55e, #16a34a); color:white; border:none; border-radius:8px; font-weight:900; font-size:13px; cursor:pointer; box-shadow:0 3px 10px rgba(34,197,94,0.4);">${startBtnText}</button>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center; align-items:center;">
+                        ${chipsHtml}
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center; align-items:center;">
+                        <button type="button" onclick="handleRandomDeploy()" style="padding:8px 14px; background:linear-gradient(135deg, #0284c7, #0369a1); color:white; border:1px solid #38bdf8; border-radius:8px; font-weight:bold; font-size:12px; cursor:pointer;" title="Gemileri haritaya otomatik yerleştir">🎲 Rastgele Diz</button>
+                        <button type="button" id="amiralRotateBtn" onclick="toggleOrientation()" style="padding:8px 14px; background:rgba(30,41,59,0.9); color:#facc15; border:1px solid #facc15; border-radius:8px; font-weight:bold; font-size:12px; cursor:pointer;">🔄 Yön: ${currentOrientation === 'H' ? 'Yatay ➔' : 'Dikey ⬇'}</button>
+                        <button type="button" onclick="clearPlayerFleet()" style="padding:8px 14px; background:rgba(239,68,68,0.2); color:#fca5a5; border:1px solid #ef4444; border-radius:8px; font-weight:bold; font-size:12px; cursor:pointer;" title="Haritayı temizleyip kendi gemilerini tek tek diz">🗑️ Temizle</button>
+                        <button type="button" onclick="startBattle()" style="padding:8px 20px; background:linear-gradient(135deg, #22c55e, #16a34a); color:white; border:none; border-radius:8px; font-weight:900; font-size:13px; cursor:${startBtnCursor}; opacity:${startBtnOpacity}; box-shadow:0 3px 10px rgba(34,197,94,0.4);">${startBtnText}</button>
+                    </div>
                 `;
             }
         }
         const banner = document.getElementById('amiralStatusBanner');
         if (banner) {
-            banner.innerHTML = `<span style="color:#38bdf8;">⚓ Gemilerini yerleştir ve muharebeye başla!</span>`;
+            let nextShip = getNextShipToPlace();
+            if (nextShip) {
+                banner.innerHTML = `<span style="color:#38bdf8;">⚓ <b>${nextShip.name}</b> (${nextShip.size} kare) için ızgaraya tıkla ya da <b>Rastgele Diz</b>'e bas.</span>`;
+            } else {
+                banner.innerHTML = `<span style="color:#4ade80;">✅ 4 geminin tamamı hazır! <b>Savaşa Başla</b> butonuna tıkla.</span>`;
+            }
         }
     }
 
@@ -722,8 +873,21 @@
         const hud = document.getElementById('amiralFleetHUD');
         if (!hud) return;
 
-        let playerAlive = playerShips.filter(s => !s.sunk).length;
-        let enemyAlive = enemyShips.filter(s => !s.sunk).length;
+        let playerAlive = 0;
+        let enemyAlive = 0;
+
+        if (serverAmiralData && serverAmiralData.myShips && serverAmiralData.myShips.length > 0) {
+            playerAlive = serverAmiralData.myShips.filter(s => !s.sunk).length;
+        } else {
+            playerAlive = playerShips.filter(s => !s.sunk).length;
+        }
+
+        if (serverAmiralData && serverAmiralData.oppShipsStatus && serverAmiralData.oppShipsStatus.length > 0) {
+            enemyAlive = serverAmiralData.oppShipsStatus.filter(s => !s.sunk).length;
+        } else {
+            enemyAlive = enemyShips.filter(s => !s.sunk).length;
+        }
+
         let oppName = "Düşman Donanması";
         if (serverAmiralData && socket) {
             let oppPid = serverAmiralData.players.find(p => p !== socket.id);
@@ -733,10 +897,16 @@
         }
 
         hud.innerHTML = `
-            <div style="display:flex; justify-content:space-around; align-items:center; background:rgba(15,23,42,0.8); border:1px solid rgba(56,189,248,0.25); border-radius:10px; padding:6px 14px; margin-bottom:10px; font-size:12px; font-weight:bold;">
-                <div style="color:#38bdf8;">🚢 Senin Donanman: <b style="color:#4ade80; font-size:14px;">${playerAlive} / 4</b> Sağlam</div>
-                <div style="color:#cbd5e1;">🎯 İsabet Oranı: <b>${playerStats.shots > 0 ? Math.round((playerStats.hits / playerStats.shots) * 100) : 0}%</b></div>
-                <div style="color:#f87171;">☠️ ${oppName}: <b style="color:#facc15; font-size:14px;">${enemyAlive} / 4</b> Sağlam</div>
+            <div style="display:flex; justify-content:space-around; align-items:center; background:rgba(15,23,42,0.85); border:1.5px solid rgba(56,189,248,0.3); border-radius:12px; padding:8px 16px; margin-bottom:12px; font-size:13px; font-weight:800; box-shadow:0 4px 15px rgba(0,0,0,0.4);">
+                <div style="color:#38bdf8; display:flex; align-items:center; gap:6px;">
+                    <span>🚢 Senin Donanman:</span>
+                    <span style="background:rgba(34,197,94,0.2); border:1px solid #22c55e; color:#4ade80; padding:2px 8px; border-radius:8px; font-size:14px;">${playerAlive} / 4 Sağlam</span>
+                </div>
+                <div style="color:#cbd5e1; font-size:12px;">🎯 İsabet: <b style="color:#facc15;">${playerStats.shots > 0 ? Math.round((playerStats.hits / playerStats.shots) * 100) : 0}%</b></div>
+                <div style="color:#f87171; display:flex; align-items:center; gap:6px;">
+                    <span>☠️ ${oppName}:</span>
+                    <span style="background:rgba(239,68,68,0.2); border:1px solid #ef4444; color:#f87171; padding:2px 8px; border-radius:8px; font-size:14px;">${enemyAlive} / 4 Sağlam</span>
+                </div>
             </div>
         `;
     }
@@ -753,6 +923,10 @@
         if (!cont) return;
         cont.innerHTML = '';
 
+        if (!isEnemy) {
+            cont.onmouseleave = () => clearPlacementPreviews();
+        }
+
         for (let r = 0; r < GRID_SIZE; r++) {
             for (let c = 0; c < GRID_SIZE; c++) {
                 const cellData = grid[r][c];
@@ -766,7 +940,7 @@
                     if (cellData.hit) {
                         cell.classList.add('hit');
                         cell.innerHTML = '🔥';
-                        if (cellData.ship && cellData.ship.sunk) {
+                        if (cellData.sunk || (cellData.ship && cellData.ship.sunk)) {
                             cell.classList.add('sunk');
                             cell.innerHTML = '☠️';
                         }
@@ -784,13 +958,20 @@
                         cell.classList.add('has-ship');
                         if (cellData.hit) {
                             cell.classList.add('hit');
-                            cell.innerHTML = cellData.ship.sunk ? '☠️' : '🔥';
+                            let isSunk = cellData.ship?.sunk || (typeof cellData.ship === 'object' && cellData.ship.hits >= cellData.ship.size);
+                            cell.innerHTML = isSunk ? '☠️' : '🔥';
                         } else {
                             cell.innerHTML = '🚢';
                         }
                     } else if (cellData.miss) {
                         cell.classList.add('miss');
                         cell.innerHTML = '🌊';
+                    }
+
+                    // Manuel Hazırlık Aşaması Etkileşimi
+                    if (phase === 'SETUP' && !isReadySent) {
+                        cell.onclick = () => handlePlayerGridCellClick(r, c);
+                        cell.onmouseenter = () => handlePlayerGridCellHover(r, c);
                     }
                 }
 

@@ -107,6 +107,24 @@ const STATIC_ROOM_SEATS = {
         { x: 590, y: 285, facing: 'down', label: 'Billboard Önü Bankı' },
         { x: 360, y: 405, facing: 'up', label: 'Çınar Altı Park Bankı' }
     ],
+    sahilv2: [
+        // Tropik Bar Önü Tabureleri (Oturunca Kokteyl Menüsü Otomatik Açılır)
+        { x: 880, y: 446, facing: 'up', label: 'Tropik Bar Taburesi', game: 'cocktail_bar' },
+        { x: 909, y: 446, facing: 'up', label: 'Tropik Bar Taburesi', game: 'cocktail_bar' },
+        { x: 938, y: 446, facing: 'up', label: 'Tropik Bar Taburesi', game: 'cocktail_bar' },
+        // Ahşap İskele Seyir & Balıkçı Bankları (İskele Ahşap Güverte Üzerinde)
+        { x: 186, y: 110, facing: 'down-right', label: 'İskele Seyir Bankı' },
+        { x: 356, y: 208, facing: 'down-right', label: 'İskele Balıkçı Bankı' },
+        // Kamp Ateşi Ahşap Kütük Koltukları
+        { x: 682, y: 486, facing: 'right', label: 'Kamp Ateşi Kütüğü' },
+        { x: 746, y: 486, facing: 'left', label: 'Kamp Ateşi Kütüğü' },
+        // Kumsal Güneşlenme Havluları
+        { x: 585, y: 480, facing: 'down-right', label: 'Güneşlenme Havlusu' },
+        { x: 610, y: 470, facing: 'down-right', label: 'Güneşlenme Havlusu' },
+        { x: 745, y: 590, facing: 'down-left', label: 'Güneşlenme Havlusu' },
+        { x: 772, y: 575, facing: 'down-left', label: 'Güneşlenme Havlusu' },
+        { x: 885, y: 210, facing: 'down-left', label: 'Plaj Şemsiye Havlusu' }
+    ],
     dostlar_kiraathanesi: [
         // 4 Kişilik Normal Batak Masası Sandalyeleri (cx: 320, cy: 230)
         { x: 320, y: 165, facing: 'down', label: 'Batak Masası Sandalyesi (Kuzey)', game: 'batak4', tableId: 'batak4' },

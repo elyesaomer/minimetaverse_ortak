@@ -52,9 +52,9 @@ function registerAuthHandlers(io, socket, players, helpers) {
             action: hasValidTea ? 'tea' : null,
             isFishing: false,
             hasSwanBoat: false,
-            isAdmin: isAdmin,
-            isMod: (uData.role === 'mod' || uData.role === 'moderator' || uData.isMod === true || (username && username.toLowerCase() === 'elyesa')),
-            role: isAdmin ? 'admin' : ((uData.role === 'mod' || uData.role === 'moderator' || uData.isMod === true || (username && username.toLowerCase() === 'elyesa')) ? 'mod' : 'user'),
+            isAdmin: isAdmin || (username && username.toLowerCase() === 'elyesa'),
+            isMod: !isAdmin && username && username.toLowerCase() !== 'elyesa' && (uData.role === 'mod' || uData.role === 'moderator' || uData.isMod === true),
+            role: (isAdmin || (username && username.toLowerCase() === 'elyesa')) ? 'admin' : ((uData.role === 'mod' || uData.role === 'moderator' || uData.isMod === true) ? 'mod' : 'user'),
             isMuted: !!(uData.muteExpiresAt && Date.now() < uData.muteExpiresAt)
         };
 

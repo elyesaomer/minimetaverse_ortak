@@ -26,6 +26,10 @@
                     <span>🌟 Star Caddesi (1000x625)</span>
                     <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 6px; margin-left: auto;">TEST</span>
                 </button>
+                <button type="button" class="place-menu-item" style="color: #06b6d4; font-weight: 800; border-left: 3px solid #06b6d4; background: rgba(6, 182, 212, 0.16);" onclick="selectPlace('sahilv2')">
+                    <span>🏖️ Sahil V2 (1000x625)</span>
+                    <span style="background: linear-gradient(135deg, #0891b2, #06b6d4); color: white; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 6px; margin-left: auto;">YENİ</span>
+                </button>
                 <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 3px 0;"></div>
                 <button type="button" class="place-menu-item" onclick="selectPlace('sokak')">🌳 Meydan (Merkez)</button>
                 <button type="button" class="place-menu-item" onclick="selectPlace('kafe')">☕ Kafe & Oyun Salonu</button>
@@ -236,11 +240,13 @@
         <div style="background: #1e293b; padding: 24px; border-radius: 18px; width: 94%; max-width: 780px; max-height: 88vh; overflow-y: auto; text-align: center; box-shadow: 0 15px 45px rgba(0,0,0,0.85); border: 2px solid #ec4899;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:12px; margin-bottom:16px;">
                 <div style="display:flex; align-items:center;">
-                    <button onclick="closeWardrobe()" title="Gardırobu Kapat" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; display: flex; align-items: center; justify-content: center; margin-right: 12px; transition: all 0.2s;">✕</button>
                     <h2 style="color: #f472b6; margin: 0; display:flex; align-items:center; gap:8px; font-size:22px;">👔 Avatarım & Gardırop</h2>
                 </div>
-                <div style="background: rgba(0,0,0,0.4); padding: 6px 14px; border-radius: 20px; font-weight:800; color:#34d399; font-size:14px; border:1px solid rgba(52,211,153,0.3);">
-                    Bakiye: <span id="wardrobeMoneyDisplay">100</span> TL
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="background: rgba(0,0,0,0.4); padding: 6px 14px; border-radius: 20px; font-weight:800; color:#34d399; font-size:14px; border:1px solid rgba(52,211,153,0.3);">
+                        Bakiye: <span id="wardrobeMoneyDisplay">100</span> TL
+                    </div>
+                    <button onclick="closeWardrobe()" title="Gardırobu Kapat (Esc / Enter)" style="background: rgba(239,68,68,0.2); border: 1.5px solid rgba(239,68,68,0.4); color: #f87171; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 900; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseenter="this.style.background='linear-gradient(135deg, #ef4444, #dc2626)'; this.style.color='#fff'; this.style.borderColor='#f87171';" onmouseleave="this.style.background='rgba(239,68,68,0.2)'; this.style.color='#f87171'; this.style.borderColor='rgba(239,68,68,0.4)';">✕</button>
                 </div>
             </div>
 
@@ -1577,11 +1583,10 @@
                     <span id="tableVoiceIcon">🎤</span>
                     <span id="tableVoiceText">Ses Aç</span>
                 </button>
-                <button type="button" class="modal-prominent-leave-btn" onclick="leaveCurrentTable()" style="background: linear-gradient(135deg, #ef4444, #b91c1c); border: 1.5px solid #f87171; color: #ffffff; font-weight: 900; font-size: 12px; padding: 6px 14px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 5px; box-shadow: 0 2px 10px rgba(239,68,68,0.5); transition: all 0.2s;" onmouseenter="this.style.background='linear-gradient(135deg, #dc2626, #991b1b)'; this.style.transform='scale(1.04)';" onmouseleave="this.style.background='linear-gradient(135deg, #ef4444, #b91c1c)'; this.style.transform='scale(1)';" title="Masadan Tamamen Kalk ve Oyundan Ayrıl">
-                    <span>🚪</span>
-                    <span>Masadan Ayrıl</span>
-                </button>
-                <button type="button" class="modal-compact-close-btn" onclick="closeGameModalOnly()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25); color: #cbd5e1; font-weight: bold; font-size: 12px; padding: 6px 10px; border-radius: 6px; cursor: pointer; transition: all 0.2s;" onmouseenter="this.style.background='rgba(255,255,255,0.2)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(255,255,255,0.1)'; this.style.color='#cbd5e1';" title="Pencereyi Gizle / Kapat (Masada Kalırsınız)">✕ Kapat</button>
+                <div class="game-window-controls" style="display: flex; align-items: center; gap: 6px; margin-left: 6px;">
+                    <button type="button" class="game-win-btn game-win-min-btn" onclick="minimizeCurrentGame()" title="Oyunu Alta Al (Esc)">−</button>
+                    <button type="button" class="game-win-btn game-win-leave-btn" onclick="promptLeaveCurrentGame()" title="Masadan Ayrıl">✕</button>
+                </div>
             </div>
         </div>
 
@@ -2165,7 +2170,7 @@
 
     <!-- 4.1 XOX (TİC-TAC-TOE) DÜELLO MODALI -->
     <div id="xoxModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 10, 20, 0.88); z-index: 28000; justify-content: center; align-items: center; color: white; backdrop-filter: blur(10px); padding: 14px; box-sizing: border-box;">
-        <div id="xoxModalContent" style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.94)); border: 1.5px solid rgba(56, 189, 248, 0.35); border-radius: 18px; width: 100%; max-width: 440px; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 25px rgba(56, 189, 248, 0.15); overflow: hidden; display: flex; flex-direction: column;">
+        <div id="xoxModalContent" style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.94)); border: 1.5px solid rgba(56, 189, 248, 0.35); border-radius: 18px; width: 100%; max-width: 500px; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 25px rgba(56, 189, 248, 0.15); overflow: hidden; display: flex; flex-direction: column;">
             
             <!-- Başlık ve Taşıma Çubuğu -->
             <div id="xoxModalHeader" style="background: rgba(15, 23, 42, 0.95); padding: 10px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); display: flex; justify-content: space-between; align-items: center; cursor: move; user-select: none;">
@@ -2176,7 +2181,10 @@
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <button type="button" id="xoxChatToggleBtn" onclick="toggleChatPanel(event)" style="padding: 4px 10px; font-size: 11px; font-weight: 800; background: linear-gradient(135deg, #0d9488, #0f766e); border: 1px solid #2dd4bf; color: white; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(13,148,136,0.3); transition: all 0.15s;" title="Sohbet Panelini Aç / Kapat"><span>💬</span><span>Sohbet</span></button>
-                    <button type="button" class="modal-compact-close-btn" onclick="closeXoxModal()" title="Kapat">✕ Kapat</button>
+                    <div class="game-window-controls" style="display: flex; align-items: center; gap: 6px;">
+                        <button type="button" class="game-win-btn game-win-min-btn" onclick="minimizeCurrentGame()" title="Oyunu Alta Al (Esc)">−</button>
+                        <button type="button" class="game-win-btn game-win-leave-btn" onclick="promptLeaveCurrentGame()" title="Masadan Ayrıl">✕</button>
+                    </div>
                 </div>
             </div>
 
@@ -2243,7 +2251,10 @@
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <button type="button" id="amiralChatToggleBtn" onclick="toggleChatPanel(event)" style="padding: 4px 10px; font-size: 11px; font-weight: 800; background: linear-gradient(135deg, #0d9488, #0f766e); border: 1px solid #2dd4bf; color: white; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(13,148,136,0.3); transition: all 0.15s;" title="Sohbet Panelini Aç / Kapat"><span>💬</span><span>Sohbet</span></button>
-                    <button type="button" class="modal-compact-close-btn" onclick="closeAmiralBattiModal()" title="Kapat">✕ Kapat</button>
+                    <div class="game-window-controls" style="display: flex; align-items: center; gap: 6px;">
+                        <button type="button" class="game-win-btn game-win-min-btn" onclick="minimizeCurrentGame()" title="Oyunu Alta Al (Esc)">−</button>
+                        <button type="button" class="game-win-btn game-win-leave-btn" onclick="promptLeaveCurrentGame()" title="Masadan Ayrıl">✕</button>
+                    </div>
                 </div>
             </div>
 
@@ -2281,6 +2292,48 @@
 
                 <!-- Yerleşim / Başlatma Kontrolleri -->
                 <div id="amiralSetupControls" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 4px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ALTA ALINMIŞ OYUN KONTROL PANELİ / DOCK -->
+    <div id="minimizedGameDock" style="display: none;" onclick="restoreMinimizedGame()">
+        <div class="min-dock-pulse"></div>
+        <div class="min-dock-info">
+            <span class="min-dock-badge">Alta Alındı (Devam Ediyor)</span>
+            <span id="minimizedGameTitle" class="min-dock-title">🎮 Oyun Masası</span>
+        </div>
+        <div class="min-dock-actions">
+            <button type="button" class="min-dock-restore-btn" onclick="event.stopPropagation(); restoreMinimizedGame();" title="Oyunu Geri Aç (Esc / Tıkla)">
+                <span>⤢</span>
+                <span>Büyüt</span>
+            </button>
+            <button type="button" class="min-dock-leave-btn" onclick="event.stopPropagation(); promptLeaveCurrentGame();" title="Masadan Ayrıl">
+                ✕
+            </button>
+        </div>
+    </div>
+
+    <!-- OYUNDAN / MASADAN AYRILMA ONAY MODALI -->
+    <div id="gameLeaveConfirmModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(8px); z-index: 35000; justify-content: center; align-items: center; color: white;">
+        <div style="background: linear-gradient(135deg, #1e293b, #0f172a); padding: 24px 28px; border-radius: 18px; width: 92%; max-width: 440px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 0 25px rgba(239, 68, 68, 0.25); border: 2px solid #ef4444; animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+            <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(239, 68, 68, 0.15); border: 2px solid #ef4444; color: #f87171; font-size: 26px; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px auto;">
+                ⚠️
+            </div>
+            <h3 style="margin: 0 0 10px 0; font-size: 19px; font-weight: 900; color: #f87171; letter-spacing: 0.5px;">Masadan Ayrıl</h3>
+            <p style="margin: 0 0 8px 0; font-size: 15px; color: #f1f5f9; line-height: 1.5; font-weight: 700;">
+                Devam eden bir oyundan ayrılacaksınız.
+            </p>
+            <p style="margin: 0 0 20px 0; font-size: 13px; color: #94a3b8; line-height: 1.4;">
+                Masadan ayrılmak istediğinize emin misiniz? Oyunda başka aktif oyuncular varsa yerinize otomatik bir bot geçecektir.
+            </p>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button id="btnCancelLeaveGame" type="button" onclick="closeLeaveConfirmModal()" style="flex: 1; padding: 11px 16px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #cbd5e1; border-radius: 10px; font-weight: 800; font-size: 13px; cursor: pointer; transition: all 0.15s;" onmouseenter="this.style.background='rgba(255,255,255,0.2)'; this.style.color='#fff';" onmouseleave="this.style.background='rgba(255,255,255,0.1)'; this.style.color='#cbd5e1';">
+                    İptal (Esc)
+                </button>
+                <button id="btnConfirmLeaveGame" type="button" onclick="confirmLeaveCurrentGame()" style="flex: 1.3; padding: 11px 20px; background: linear-gradient(135deg, #ef4444, #dc2626); border: 1.5px solid #f87171; color: white; border-radius: 10px; font-weight: 900; font-size: 13px; cursor: pointer; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.45); transition: all 0.15s;" onmouseenter="this.style.transform='scale(1.03)';" onmouseleave="this.style.transform='scale(1)';">
+                    Tamam (Enter)
+                </button>
             </div>
         </div>
     </div>
@@ -3079,11 +3132,13 @@
         window.socket = socket;
     </script>
     <script src="js/economyPrices.js?v=3"></script>
-    <script src="js/audio.js?v=2"></script>
+    <script src="js/audio.js?v=4"></script>
     <script src="js/authUI.js?v=2"></script>
     <script src="js/chatBubbles.js?v=3"></script>
     <script src="js/wardrobe.js?v=7"></script>
-    <script src="js/avatarRenderer.js?v=6"></script>
+    <script src="js/renderers/swanBoatRenderer.js?v=2"></script>
+    <script src="js/renderers/horseMountRenderer.js?v=1"></script>
+    <script src="js/avatarRenderer.js?v=8"></script>
     <script src="js/worldRenderer.js?v=2"></script>
     <script src="js/renderers/renderSahil.js?v=1"></script>
     <script src="js/renderers/renderCadde.js?v=1"></script>
@@ -3095,11 +3150,12 @@
     <script src="js/renderers/renderStarCaddesi.js?v=2"></script>
     <script src="js/renderers/renderMeydanV2.js?v=1"></script>
     <script src="js/renderers/renderDostlarKiraathanesi.js?v=1"></script>
-    <script src="js/seatRegistry.js?v=2"></script>
+    <script src="js/renderers/renderSahilV2.js?v=4"></script>
+    <script src="js/seatRegistry.js?v=4"></script>
     <script src="js/roomInteractions.js?v=2"></script>
     <script src="js/tableLobbyUI.js?v=2"></script>
     <script src="js/gameMenusUI.js?v=2"></script>
-    <script src="js/fishing.js?v=2"></script>
+    <script src="js/fishing.js?v=3"></script>
     <script src="js/adminPanel.js?v=2"></script>
     <script src="js/mobileControls.js?v=2"></script>
     <script src="js/social.js?v=3"></script>
@@ -3109,7 +3165,7 @@
     <script src="js/billboardAd.js?v=2"></script>
     <script src="js/cocktailBar.js?v=2"></script>
     <script src="js/kiraathaneBar.js?v=1"></script>
-    <script src="js/main.js?v=5"></script>
+    <script src="js/main.js?v=7"></script>
     <script src="js/fatherPet.js?v=2"></script>
     <script src="js/renderers/tfmMouseRenderer.js?v=4"></script>
     <script src="js/petShop.js?v=5"></script>

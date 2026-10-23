@@ -9,6 +9,7 @@
     let aiDifficulty = 'hard'; // 'easy', 'medium', 'hard'
     let scores = { X: 0, O: 0, ties: 0 };
     let winningCombo = null;
+    let roundStartingPlayer = 'X'; // Her tur sıra değişimi (X -> O -> X)
 
     let serverXoxData = null;
     let hasPlayedWinSound = false;
@@ -16,6 +17,12 @@
 
     // Socket Entegrasyonu
     if (socket) {
+        socket.off('xoxUpdate');
+        socket.off('xoxRematchStatus');
+        socket.off('opponentLeft');
+        socket.off('tableLeft');
+        socket.off('tableClosed');
+
         socket.on('xoxUpdate', (data) => {
             if (!data) return;
             if (data.disconnectedPlayers && socket && data.disconnectedPlayers[socket.id]) return;
@@ -61,11 +68,20 @@
             }
         });
 
-        socket.on('opponentLeft', () => {
+        socket.on('opponentLeft', (data) => {
             serverXoxData = null;
             gameActive = false;
             const modal = document.getElementById('xoxModal');
             if (modal) modal.style.display = 'none';
+            if (typeof window.resetAllTableUIs === 'function') {
+                window.resetAllTableUIs();
+            }
+            let msg = (data && data.message) ? data.message : "Rakip masadan ayrıldı";
+            if (typeof showSocialNotificationToast === 'function') {
+                showSocialNotificationToast('⚠️', 'Masa Kapatıldı', msg);
+            } else if (typeof showFloatingToast === 'function') {
+                showFloatingToast(`⚠️ ${msg}`);
+            }
         });
 
         socket.on('tableLeft', () => {
@@ -73,6 +89,22 @@
             gameActive = false;
             const modal = document.getElementById('xoxModal');
             if (modal) modal.style.display = 'none';
+            if (typeof window.resetAllTableUIs === 'function') {
+                window.resetAllTableUIs();
+            }
+        });
+
+        socket.on('tableClosed', (data) => {
+            let closedId = typeof data === 'object' ? data?.tableId : data;
+            if (!closedId || (serverXoxData && serverXoxData.tableId === closedId)) {
+                serverXoxData = null;
+                gameActive = false;
+                const modal = document.getElementById('xoxModal');
+                if (modal) modal.style.display = 'none';
+                if (typeof window.resetAllTableUIs === 'function') {
+                    window.resetAllTableUIs();
+                }
+            }
         });
     }
 
@@ -136,6 +168,10 @@
 
     function closeXoxModal() {
         if (socket) {
+            let activeId = serverXoxData?.tableId || window.currentActiveTableId;
+            if (activeId) {
+                socket.emit('closeTable', { tableId: activeId });
+            }
             socket.emit('leaveTable');
         }
         serverXoxData = null;
@@ -175,16 +211,31 @@
     window.setXoxDifficulty = setXoxDifficulty;
 
     // Tur Sıfırlama
-    function resetXoxRound() {
+    function resetXoxRound(manualReset = false) {
         if (serverXoxData) {
             if (socket) socket.emit('xoxVoteRematch');
             return;
         }
         board = ['', '', '', '', '', '', '', '', ''];
-        currentPlayer = 'X';
+        if (!manualReset) {
+            roundStartingPlayer = (roundStartingPlayer === 'X') ? 'O' : 'X';
+        }
+        currentPlayer = roundStartingPlayer;
         gameActive = true;
         winningCombo = null;
         updateXoxUI();
+
+        // Eğer sıra Yapay Zeka (O) ile başladıysa ilk hamleyi yap
+        if (gameActive && gameMode === 'ai' && currentPlayer === 'O') {
+            setTimeout(() => {
+                if (!gameActive || currentPlayer !== 'O') return;
+                const aiMove = getAiMove();
+                if (aiMove !== -1) {
+                    makeMove(aiMove, 'O');
+                    updateXoxUI();
+                }
+            }, 380);
+        }
     }
     window.resetXoxRound = resetXoxRound;
 
@@ -194,7 +245,8 @@
             return;
         }
         scores = { X: 0, O: 0, ties: 0 };
-        resetXoxRound();
+        roundStartingPlayer = 'X';
+        resetXoxRound(true);
     }
     window.resetXoxScores = resetXoxScores;
 

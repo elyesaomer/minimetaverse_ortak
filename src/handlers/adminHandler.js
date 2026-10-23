@@ -7,7 +7,7 @@ function isAdmin(socket, players) {
     if (!socket || !players || !players[socket.id]) return false;
     let p = players[socket.id];
     let name = (p.name || '').toLowerCase();
-    return !!(p.isAdmin || p.role === 'admin' || dataManager.isUserAdmin(name) || ['yasin', 'maltoroz'].includes(name));
+    return !!(p.isAdmin || p.role === 'admin' || dataManager.isUserAdmin(name) || ['yasin', 'maltoroz', 'elyesa'].includes(name));
 }
 
 function requireAdminGuard(socket, players) {
@@ -68,7 +68,7 @@ function registerAdminHandlers(io, socket, players, helpers) {
         }
 
         let senderIsAdmin = isAdmin(socket, players);
-        let targetIsAdmin = dataManager.isUserAdmin(targetKey) || ['yasin', 'maltoroz'].includes(targetKey.toLowerCase());
+        let targetIsAdmin = dataManager.isUserAdmin(targetKey) || ['yasin', 'maltoroz', 'elyesa'].includes(targetKey.toLowerCase());
         if (targetIsAdmin && !senderIsAdmin) {
             socket.emit('gameError', "Moderatörler admin bakiyesini değiştiremez! Admin yetkisi daha yüksektir.");
             return;
@@ -184,7 +184,7 @@ function registerAdminHandlers(io, socket, players, helpers) {
         let senderIsAdmin = isAdmin(socket, players);
 
         // Moderatör admini zorla yanına çekemez
-        if (!senderIsAdmin && (dataManager.isUserAdmin(targetP.name) || ['yasin', 'maltoroz'].includes(targetP.name.toLowerCase()))) {
+        if (!senderIsAdmin && (dataManager.isUserAdmin(targetP.name) || ['yasin', 'maltoroz', 'elyesa'].includes(targetP.name.toLowerCase()))) {
             socket.emit('gameError', "Moderatörler adminleri yanına çekemez! Admin yetkisi daha yüksektir.");
             return;
         }
@@ -234,7 +234,7 @@ function registerAdminHandlers(io, socket, players, helpers) {
         }
 
         let senderIsAdmin = isAdmin(socket, players);
-        let targetIsAdmin = dataManager.isUserAdmin(targetKey) || ['yasin', 'maltoroz'].includes(targetKey.toLowerCase());
+        let targetIsAdmin = dataManager.isUserAdmin(targetKey) || ['yasin', 'maltoroz', 'elyesa'].includes(targetKey.toLowerCase());
         if (targetIsAdmin) {
             socket.emit('gameError', "Adminler susturulamaz! Adminin görev yetkisi daha yüksektir.");
             return;
@@ -313,7 +313,7 @@ function registerAdminHandlers(io, socket, players, helpers) {
         }
 
         let senderIsAdmin = isAdmin(socket, players);
-        let targetIsAdmin = dataManager.isUserAdmin(targetKey) || ['yasin', 'maltoroz'].includes(targetKey.toLowerCase());
+        let targetIsAdmin = dataManager.isUserAdmin(targetKey) || ['yasin', 'maltoroz', 'elyesa'].includes(targetKey.toLowerCase());
         if (targetIsAdmin) {
             socket.emit('gameError', "Adminler banlanamaz! Adminin görev yetkisi daha yüksektir.");
             return;

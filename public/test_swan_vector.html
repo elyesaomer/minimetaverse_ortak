@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Kuğu Deniz Bisikleti - 8 Yönlü Test</title>
+    <style>
+        body { background: #0f172a; color: white; font-family: sans-serif; text-align: center; padding: 20px; }
+        .grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; margin-top: 20px; }
+        .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 12px; width: 140px; }
+        canvas { background: #0284c7; border-radius: 8px; display: block; margin: 0 auto; }
+        .title { font-weight: bold; font-size: 13px; margin-bottom: 8px; color: #38bdf8; }
+        #demoCanvas { background: #0369a1; border: 2px solid #38bdf8; border-radius: 12px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h2>🦢 Yeni Kuğu Deniz Bisikleti - 8 Yönlü İzometrik Renderer</h2>
+    <p style="color: #94a3b8; font-size: 14px;">Tüm yönlerde pürüzsüz vektörel çizim, sıfır bug, su dalgası ve kokpit entegrasyonu</p>
+    
+    <div class="grid" id="grid"></div>
+
+    <h3 style="margin-top: 30px;">Canlı Animasyonlu Yüzüş & Sürüş Önizlemesi</h3>
+    <canvas id="demoCanvas" width="600" height="300"></canvas>
+
+    <script src="/js/renderers/swanBoatRenderer.js"></script>
+    <script>
+        const dirs = ['down', 'down-left', 'down-right', 'left', 'right', 'up-left', 'up-right', 'up'];
+        const grid = document.getElementById('grid');
+
+        dirs.forEach(dir => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `<div class="title">${dir.toUpperCase()}</div>`;
+            const cv = document.createElement('canvas');
+            cv.width = 110;
+            cv.height = 90;
+            const ctx = cv.getContext('2d');
+
+            function renderStatic() {
+                ctx.clearRect(0, 0, cv.width, cv.height);
+                // Draw water background pattern
+                ctx.fillStyle = '#0284c7';
+                ctx.fillRect(0, 0, cv.width, cv.height);
+
+                ctx.save();
+                ctx.translate(cv.width / 2, cv.height / 2 + 5);
+                window.SwanBoatRenderer.draw(ctx, {
+                    direction: dir,
+                    isMoving: true,
+                    inWater: true,
+                    scale: 1.1
+                });
+                ctx.restore();
+            }
+            card.appendChild(cv);
+            grid.appendChild(card);
+            setInterval(renderStatic, 50);
+        });
+
+        // Demo Canvas
+        const demoCv = document.getElementById('demoCanvas');
+        const demoCtx = demoCv.getContext('2d');
+        let posX = 100, posY = 150;
+        let curDirIdx = 0;
+        let lastSwitch = Date.now();
+
+        function animateDemo() {
+            demoCtx.fillStyle = '#0284c7';
+            demoCtx.fillRect(0, 0, demoCv.width, demoCv.height);
+
+            // Water ripples
+            demoCtx.strokeStyle = 'rgba(255,255,255,0.2)';
+            demoCtx.lineWidth = 1.5;
+            for (let i = 0; i < 8; i++) {
+                let rx = (i * 80 + Date.now() / 30) % demoCv.width;
+                let ry = 40 + i * 28;
+                demoCtx.beginPath();
+                demoCtx.ellipse(rx, ry, 30, 6, 0, 0, Math.PI * 2);
+                demoCtx.stroke();
+            }
+
+            if (Date.now() - lastSwitch > 2000) {
+                curDirIdx = (curDirIdx + 1) % dirs.length;
+                lastSwitch = Date.now();
+            }
+
+            let d = dirs[curDirIdx];
+            demoCtx.save();
+            demoCtx.translate(demoCv.width / 2, demoCv.height / 2);
+            window.SwanBoatRenderer.draw(demoCtx, {
+                direction: d,
+                isMoving: true,
+                inWater: true,
+                scale: 1.3
+            });
+            demoCtx.restore();
+
+            demoCtx.fillStyle = '#facc15';
+            demoCtx.font = 'bold 14px sans-serif';
+            demoCtx.textAlign = 'center';
+            demoCtx.fillText(`Yön: ${d.toUpperCase()}`, demoCv.width / 2, demoCv.height - 20);
+
+            requestAnimationFrame(animateDemo);
+        }
+        animateDemo();
+    </script>
+</body>
+</html>

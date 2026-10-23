@@ -396,7 +396,7 @@ function changeRoom(newRoom, targetSpawn) {
     roomTransitionFadeAlpha = 0.95; // Sinematik mekan geçiş kararması (Fade in)
     // Dinamik Ekran Büyütme (Star Caddesi, Meydan v2, Dostlar Kıraathanesi: 1000 x 625, Diğerleri: 800 x 500)
     if (canvas) {
-        if (newRoom === 'star_caddesi' || newRoom === 'meydanv2' || newRoom === 'dostlar_kiraathanesi') {
+        if (newRoom === 'star_caddesi' || newRoom === 'meydanv2' || newRoom === 'dostlar_kiraathanesi' || newRoom === 'sahilv2') {
             canvas.width = 1000;
             canvas.height = 625;
             canvas.style.width = '1000px';
@@ -426,7 +426,17 @@ function changeRoom(newRoom, targetSpawn) {
     if (typeof handleRoomChangedVoice === 'function') {
         handleRoomChangedVoice(newRoom);
     }
-    if (newRoom !== 'sahil') {
+    // Kuğu Yalnızca Sahilv2 ve Sahil Haritasına Özeldir: Sahilv2'den başka odaya geçildiğinde anında iptal ve despawn edilir
+    if (oldRoom === 'sahilv2' && newRoom !== 'sahilv2') {
+        if (typeof myId !== 'undefined' && players[myId]) {
+            players[myId].hasSwanBoat = false;
+        }
+        if (swanBoatCountdownInterval) {
+            clearInterval(swanBoatCountdownInterval);
+            swanBoatCountdownInterval = null;
+        }
+        swanBoatSecondsLeft = 0;
+    } else if (newRoom !== 'sahil' && newRoom !== 'sahilv2') {
         if (typeof myId !== 'undefined' && players[myId]) {
             players[myId].hasSwanBoat = false;
         }
@@ -509,7 +519,7 @@ function changeRoom(newRoom, targetSpawn) {
     socket.emit('changeRoom', newRoom);
     const fishBtn = document.getElementById('btnFishAction');
     if (fishBtn) {
-        fishBtn.style.display = (newRoom === 'sahil') ? 'flex' : 'none';
+        fishBtn.style.display = (newRoom === 'sahil' || newRoom === 'sahilv2') ? 'flex' : 'none';
     }
 
 
@@ -582,7 +592,7 @@ let swanBoatSecondsLeft = 0;
 function updateSwanBoatButtonUI() {
     const swanBtn = document.getElementById('btnSwanBoatAction');
     if (!swanBtn) return;
-    swanBtn.style.display = (currentRoom === 'sahil') ? 'flex' : 'none';
+    swanBtn.style.display = (currentRoom === 'sahil' || currentRoom === 'sahilv2') ? 'flex' : 'none';
     if (players[myId] && players[myId].hasSwanBoat) {
         if (swanBoatSecondsLeft > 0) {
             let m = Math.floor(swanBoatSecondsLeft / 60);
@@ -867,20 +877,160 @@ function resetAllTableUIs() {
     if (batakYazboz) batakYazboz.style.display = 'none';
     const fundsModal = document.getElementById('insufficientFundsModal');
     if (fundsModal) fundsModal.style.display = 'none';
+    const leaveModal = document.getElementById('gameLeaveConfirmModal');
+    if (leaveModal) leaveModal.style.display = 'none';
+    const dock = document.getElementById('minimizedGameDock');
+    if (dock) dock.style.display = 'none';
+    window.activeMinimizedGame = null;
 }
 window.resetAllTableUIs = resetAllTableUIs;
 
-function closeGameModalOnly() {
-    const modal = document.getElementById('gameModal');
-    if (modal) modal.style.display = 'none';
-    if (typeof showFloatingToast === 'function') {
-        showFloatingToast('Pencere gizlendi. Masaya veya oyuna devam etmek için masaya tıklayabilirsiniz.');
+window.activeMinimizedGame = null;
+
+function getOpenGameModal() {
+    const xox = document.getElementById('xoxModal');
+    if (xox && xox.style.display !== 'none' && xox.style.display !== '') {
+        return { id: 'xoxModal', type: 'flex', name: '❌ XOX Düellosu' };
     }
+    const amiral = document.getElementById('amiralBattiModal');
+    if (amiral && amiral.style.display !== 'none' && amiral.style.display !== '') {
+        return { id: 'amiralBattiModal', type: 'flex', name: '⚓ Amiral Battı' };
+    }
+    const game = document.getElementById('gameModal');
+    if (game && game.style.display !== 'none' && game.style.display !== '') {
+        const titleEl = document.getElementById('modalTitle');
+        const title = (titleEl && titleEl.innerText) ? titleEl.innerText.trim() : '🎮 Oyun Masası';
+        return { id: 'gameModal', type: (game.style.display === 'flex' ? 'flex' : 'block'), name: title };
+    }
+    return null;
+}
+window.getOpenGameModal = getOpenGameModal;
+
+function minimizeCurrentGame() {
+    const openGame = getOpenGameModal();
+    if (!openGame) return;
+
+    window.activeMinimizedGame = openGame;
+    const modalEl = document.getElementById(openGame.id);
+    if (modalEl) modalEl.style.display = 'none';
+
+    const dock = document.getElementById('minimizedGameDock');
+    const dockTitle = document.getElementById('minimizedGameTitle');
+    if (dockTitle) dockTitle.innerText = openGame.name;
+    if (dock) dock.style.display = 'flex';
+
+    if (typeof showFloatingToast === 'function') {
+        showFloatingToast(`🎮 ${openGame.name} alta alındı.`);
+    }
+}
+window.minimizeCurrentGame = minimizeCurrentGame;
+
+function restoreMinimizedGame() {
+    const dock = document.getElementById('minimizedGameDock');
+    if (dock) dock.style.display = 'none';
+
+    if (window.activeMinimizedGame) {
+        const modalEl = document.getElementById(window.activeMinimizedGame.id);
+        if (modalEl) {
+            modalEl.style.display = window.activeMinimizedGame.type || 'flex';
+        }
+        window.activeMinimizedGame = null;
+    } else {
+        const gModal = document.getElementById('gameModal');
+        if (gModal && window.currentActiveTableId) {
+            gModal.style.display = 'block';
+        }
+    }
+}
+window.restoreMinimizedGame = restoreMinimizedGame;
+
+function promptLeaveCurrentGame() {
+    const leaveModal = document.getElementById('gameLeaveConfirmModal');
+    if (leaveModal) {
+        leaveModal.style.display = 'flex';
+    }
+}
+window.promptLeaveCurrentGame = promptLeaveCurrentGame;
+
+function closeLeaveConfirmModal() {
+    const leaveModal = document.getElementById('gameLeaveConfirmModal');
+    if (leaveModal) {
+        leaveModal.style.display = 'none';
+    }
+}
+window.closeLeaveConfirmModal = closeLeaveConfirmModal;
+
+function confirmLeaveCurrentGame() {
+    closeLeaveConfirmModal();
+
+    if (window.activeMinimizedGame) {
+        const modalEl = document.getElementById(window.activeMinimizedGame.id);
+        if (modalEl) modalEl.style.display = 'none';
+        window.activeMinimizedGame = null;
+    }
+    const dock = document.getElementById('minimizedGameDock');
+    if (dock) dock.style.display = 'none';
+
+    if (typeof closeXoxModal === 'function') closeXoxModal();
+    if (typeof closeAmiralBattiModal === 'function') closeAmiralBattiModal();
+
+    leaveCurrentTable();
+}
+window.confirmLeaveCurrentGame = confirmLeaveCurrentGame;
+
+function closeTopmostGeneralModal() {
+    const isVisible = (id) => {
+        const el = document.getElementById(id);
+        return el && el.style.display !== 'none' && el.style.display !== '';
+    };
+
+    if (isVisible('wardrobeModal')) { if (typeof closeWardrobe === 'function') closeWardrobe(); return true; }
+    if (isVisible('itemInventoryModal')) { if (typeof closeItemInventoryModal === 'function') closeItemInventoryModal(); return true; }
+    if (isVisible('playerInteractionModal')) { if (typeof closePlayerInteractionModal === 'function') closePlayerInteractionModal(); return true; }
+    if (isVisible('sendMoneyModal')) { if (typeof closeSendMoneyModal === 'function') closeSendMoneyModal(); return true; }
+    if (isVisible('giftItemModal')) { if (typeof closeGiftItemModal === 'function') closeGiftItemModal(); return true; }
+    if (isVisible('onlinePlayersModal')) { if (typeof closeOnlinePlayersModal === 'function') closeOnlinePlayersModal(); return true; }
+    if (isVisible('friendsListModal')) { if (typeof closeFriendsListModal === 'function') closeFriendsListModal(); return true; }
+    if (isVisible('dailyQuestsModal')) { if (typeof closeDailyQuestsModal === 'function') closeDailyQuestsModal(); return true; }
+    if (isVisible('realEstateModal')) { if (typeof closeRealEstateModal === 'function') closeRealEstateModal(); return true; }
+    if (isVisible('maketInspectModal')) { if (typeof closeMaketInspectModal === 'function') closeMaketInspectModal(); return true; }
+    if (isVisible('houseConfirmModal')) { if (typeof closeHouseConfirmModal === 'function') closeHouseConfirmModal(); return true; }
+    if (isVisible('furnitureMarketModal')) { if (typeof closeFurnitureMarketModal === 'function') closeFurnitureMarketModal(); return true; }
+    if (isVisible('housingPortalModal')) { if (typeof closeHousingPortalModal === 'function') closeHousingPortalModal(); return true; }
+    if (isVisible('tableSelectModal')) { if (typeof closeTableSelectModal === 'function') closeTableSelectModal(); return true; }
+    if (isVisible('leaderboardModal')) { if (typeof closeLeaderboardModal === 'function') closeLeaderboardModal(); return true; }
+    if (isVisible('petShopModal')) { if (typeof closePetShopModal === 'function') closePetShopModal(); return true; }
+    if (isVisible('adminPanelModal')) { if (typeof closeAdminPanelModal === 'function') closeAdminPanelModal(); return true; }
+    if (isVisible('changePasswordModal')) { if (typeof closeChangePasswordModal === 'function') closeChangePasswordModal(); return true; }
+    if (isVisible('settingsModal')) { if (typeof closeSettingsModal === 'function') closeSettingsModal(); return true; }
+    if (isVisible('mysteryBoxRewardModal')) { if (typeof closeMysteryBoxRewardModal === 'function') closeMysteryBoxRewardModal(); return true; }
+    if (isVisible('ganyanKuponModal')) { if (typeof closeGanyanKuponModal === 'function') closeGanyanKuponModal(); return true; }
+    if (isVisible('blackjackModal')) { if (typeof closeBlackjackModal === 'function') closeBlackjackModal(); return true; }
+    if (isVisible('rouletteModal')) { if (typeof closeRouletteModal === 'function') closeRouletteModal(); return true; }
+    if (isVisible('slotModal')) { if (typeof closeSlotModal === 'function') closeSlotModal(); return true; }
+    if (isVisible('kiraathaneBarModal')) { if (typeof closeKiraathaneBarModal === 'function') closeKiraathaneBarModal(); return true; }
+    if (isVisible('cocktailBarModal')) { if (typeof closeCocktailBarModal === 'function') closeCocktailBarModal(); return true; }
+    if (isVisible('nargileMenuModal')) { if (typeof closeNargileMenuModal === 'function') closeNargileMenuModal(); return true; }
+    if (isVisible('nargileCoalsModal')) { if (typeof closeNargileCoalsModal === 'function') closeNargileCoalsModal(); return true; }
+    if (isVisible('batakYazbozModal')) { if (typeof closeBatakYazbozModal === 'function') closeBatakYazbozModal(); return true; }
+    if (isVisible('okey101YazbozModal')) { if (typeof closeYazbozModal === 'function') closeYazbozModal(); return true; }
+
+    return false;
+}
+window.closeTopmostGeneralModal = closeTopmostGeneralModal;
+
+function closeGameModalOnly() {
+    minimizeCurrentGame();
 }
 window.closeGameModalOnly = closeGameModalOnly;
 
 function leaveCurrentTable() {
-    if (socket) socket.emit('leaveTable');
+    if (socket) {
+        if (window.currentActiveTableId) {
+            socket.emit('closeTable', { tableId: window.currentActiveTableId });
+        }
+        socket.emit('leaveTable');
+    }
     window.currentActiveTableId = null;
     resetAllTableUIs();
     if (typeof showFloatingToast === 'function') {
@@ -893,6 +1043,8 @@ socket.on('opponentLeft', (data) => {
     let msg = (data && data.message) ? data.message : "Rakip masadan ayrıldı";
     if (typeof showSocialNotificationToast === 'function') {
         showSocialNotificationToast('⚠️', 'Masa Kapatıldı', msg);
+    } else if (typeof showFloatingToast === 'function') {
+        showFloatingToast(`⚠️ ${msg}`);
     }
     resetAllTableUIs();
 });
@@ -900,6 +1052,18 @@ socket.on('opponentLeft', (data) => {
 socket.on('tableLeft', () => {
     window.currentActiveTableId = null;
     resetAllTableUIs();
+});
+
+socket.on('tableClosed', (data) => {
+    let closedId = typeof data === 'object' ? data?.tableId : data;
+    if (!closedId || (window.currentActiveTableId && window.currentActiveTableId === closedId)) {
+        window.currentActiveTableId = null;
+        resetAllTableUIs();
+    }
+    const tableSelectModal = document.getElementById('tableSelectModal');
+    if (tableSelectModal && tableSelectModal.style.display === 'flex' && window.currentSelectedBaseType && socket) {
+        socket.emit('requestTableOptions', window.currentSelectedBaseType);
+    }
 });
 
 socket.on('kiraathaneDrinkCleared', () => {
@@ -1321,6 +1485,72 @@ window.addEventListener('blur', () => {
 });
 
 window.addEventListener('keydown', (e) => {
+    // 1. ENTER TUŞU YÖNETİMİ
+    if (e.key === 'Enter') {
+        // Masadan ayrılma onay modalı açıksa Enter ile onayla
+        const leaveConfirmModal = document.getElementById('gameLeaveConfirmModal');
+        if (leaveConfirmModal && leaveConfirmModal.style.display === 'flex') {
+            e.preventDefault();
+            confirmLeaveCurrentGame();
+            return;
+        }
+
+        // Eğer kullanıcı bir yazı inputundaysa normal input davranışını bozma
+        let activeTag = document.activeElement ? document.activeElement.tagName : '';
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag) || document.activeElement?.isContentEditable) {
+            return;
+        }
+
+        // Gardırop açıksa Enter ile Kaydet & Kapat
+        const wardrobeModal = document.getElementById('wardrobeModal');
+        if (wardrobeModal && wardrobeModal.style.display === 'flex') {
+            e.preventDefault();
+            if (typeof closeWardrobe === 'function') closeWardrobe();
+            return;
+        }
+
+        // Şanslı kutu ödül modalı açıksa Enter ile kapat
+        const mysteryBox = document.getElementById('mysteryBoxRewardModal');
+        if (mysteryBox && mysteryBox.style.display === 'flex') {
+            e.preventDefault();
+            if (typeof closeMysteryBoxRewardModal === 'function') closeMysteryBoxRewardModal();
+            return;
+        }
+    }
+
+    // 2. ESCAPE (ESC) TUŞU YÖNETİMİ
+    if (e.key === 'Escape' || e.key === 'Esc') {
+        // Masadan ayrılma onay modalı açıksa Esc ile iptal et / kapat
+        const leaveConfirmModal = document.getElementById('gameLeaveConfirmModal');
+        if (leaveConfirmModal && leaveConfirmModal.style.display === 'flex') {
+            e.preventDefault();
+            closeLeaveConfirmModal();
+            return;
+        }
+
+        // Açık oyun masası/düellosu varsa ESC ile hiçbir şey sormadan oyunu alta al
+        const openGame = getOpenGameModal();
+        if (openGame) {
+            e.preventDefault();
+            minimizeCurrentGame();
+            return;
+        }
+
+        // Genel pencereler/sekmeler açıksa (gardırop, eşya, vb.) sekmeyi kapat
+        let closedAny = closeTopmostGeneralModal();
+        if (closedAny) {
+            e.preventDefault();
+            return;
+        }
+
+        // Eğer bir input içerisindeyse odağı kaldır (blur)
+        let activeTag = document.activeElement ? document.activeElement.tagName : '';
+        if (['INPUT', 'TEXTAREA'].includes(activeTag)) {
+            document.activeElement.blur();
+            return;
+        }
+    }
+
     let activeTag = document.activeElement ? document.activeElement.tagName : '';
     if (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag) || document.activeElement?.isContentEditable) return;
 
@@ -1502,6 +1732,8 @@ function gameLoop(timestamp) {
         if (typeof drawStarCaddesiEnvironment === 'function') drawStarCaddesiEnvironment();
     } else if (currentRoom === "meydanv2") {
         if (typeof drawMeydanV2Environment === 'function') drawMeydanV2Environment();
+    } else if (currentRoom === "sahilv2") {
+        if (typeof drawSahilV2Environment === 'function') drawSahilV2Environment();
     } else if (currentRoom.startsWith("house_")) {
         if (typeof drawHouseEnvironment === 'function') drawHouseEnvironment();
     } else {
@@ -1551,6 +1783,19 @@ function gameLoop(timestamp) {
             : null;
         let hasCat = !!(myPet && myPet.petType === 'cat');
         let speed = isMounted ? 6.5 : (hasCat ? 2.6 * 1.3 : 2.6);
+
+        // Kuğu Hız Kuralları (Sahil & Sahil V2): Kumsal/İskele 1x (2.6), Deniz/Su 2x (5.2)
+        let isSwanInWater = false;
+        if ((currentRoom === 'sahil' || currentRoom === 'sahilv2') && players[myId] && players[myId].hasSwanBoat) {
+            if (currentRoom === 'sahilv2' && typeof isSahilV2Water === 'function') {
+                isSwanInWater = isSahilV2Water(players[myId].x, players[myId].y);
+            } else if (currentRoom === 'sahil') {
+                let onPier = (players[myId].x >= 70 && players[myId].x <= 555 && players[myId].y >= 150 && players[myId].y <= 235);
+                let shoreX = (typeof getBeachShoreX === 'function') ? getBeachShoreX(players[myId].y) : 300;
+                isSwanInWater = (players[myId].x < shoreX && !onPier);
+            }
+            speed = isSwanInWater ? 5.2 : 2.6;
+        }
         let p = players[myId];
         let isMoving = false;
         let moveDx = 0;
@@ -1615,7 +1860,10 @@ function gameLoop(timestamp) {
             let curModel = (p && p.model) || (typeof myAvatar !== 'undefined' && myAvatar.model) || 'classic_2';
             let isClassic = (curModel !== 'classic_2' && curModel !== 'sanalika_v2');
             let curDir;
-            if (isClassic) {
+            if ((p && p.hasSwanBoat) || isMounted) {
+                // Kuğu ve binek atı her zaman 8 yönlü pürüzsüz dönüş kullanır
+                curDir = calculate8WayFacing(activeVx, activeVy) || myFacing;
+            } else if (isClassic) {
                 // Nostaljik klasik model: 8'li dönme yok, 4 ana yön
                 if (Math.abs(activeVx) >= Math.abs(activeVy)) {
                     curDir = activeVx > 0 ? 'right' : 'left';
@@ -1636,9 +1884,17 @@ function gameLoop(timestamp) {
             let prevWalkCycle = walkCycle;
             walkCycle += (isMounted ? 0.45 : 0.21) * timeScale;
 
-            // Ritmik doğal adım sesi (Footsteps SFX)
+            // Ritmik doğal adım, at toynak sesi veya su pedalı sesi
             if (Math.floor(walkCycle / Math.PI) !== Math.floor(prevWalkCycle / Math.PI)) {
-                if (window.playSound) window.playSound('footstep');
+                if (window.playSound) {
+                    if (isMounted) {
+                        window.playSound('hoofbeat');
+                    } else if (isSwanInWater) {
+                        window.playSound('waterPaddle');
+                    } else {
+                        window.playSound('footstep');
+                    }
+                }
             }
 
             let nextX = p.x + activeVx * timeScale;
@@ -1866,4 +2122,4 @@ function gameLoop(timestamp) {
         roomTransitionFadeAlpha = Math.max(0, roomTransitionFadeAlpha - dt * 4.5);
     }
 }
-
+

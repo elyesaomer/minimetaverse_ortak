@@ -154,6 +154,49 @@ function playSound(type, param) {
             osc.start(now);
             osc.stop(now + 0.04);
         }
+        else if (type === 'waterPaddle') {
+            // Su şıpırtısı / kürek / kuğu pedalı sesi
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            let filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(500, now);
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(130 + Math.random() * 25, now);
+            osc.frequency.exponentialRampToValueAtTime(65, now + 0.07);
+
+            gain.gain.setValueAtTime(0.07, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(sfxGainNode);
+            osc.start(now);
+            osc.stop(now + 0.08);
+        }
+        else if (type === 'hoofbeat' || type === 'horseGallop') {
+            // Ritmik Asil At Dörtnal / Nal Sesi (Clip-clop toynak sesi)
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            let filter = audioCtx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(320 + Math.random() * 60, now);
+            filter.Q.setValueAtTime(3.5, now);
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(180 + Math.random() * 30, now);
+            osc.frequency.exponentialRampToValueAtTime(70, now + 0.045);
+
+            gain.gain.setValueAtTime(0.14, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(sfxGainNode);
+            osc.start(now);
+            osc.stop(now + 0.05);
+        }
         else if (type === 'card') {
             // İskambil kart atma / hışırtı sesi (Havuzlanmış tampon)
             if (!cardNoiseBuffer) initNoiseBuffers();

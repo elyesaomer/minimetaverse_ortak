@@ -220,7 +220,7 @@ io.on('connection', (socket) => {
                 delete playerFishingTimers[socket.id];
             }
         }
-        if (oldRoom === 'sahil' && newRoom !== 'sahil') {
+        if ((oldRoom === 'sahil' || oldRoom === 'sahilv2') && newRoom !== oldRoom) {
             players[socket.id].hasSwanBoat = false;
             if (playerSwanTimers && playerSwanTimers[socket.id]) {
                 clearTimeout(playerSwanTimers[socket.id]);

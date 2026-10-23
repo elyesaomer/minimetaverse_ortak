@@ -8,6 +8,8 @@ const { checkRateLimit } = require('../utils/securityUtils');
 const playerSwanTimers = {};
 // Dostlar Kıraathanesi İçecek 3 Dakikalık Elde Tutma Zamanlayıcıları
 const playerKiraathaneDrinkTimers = {};
+// Tropik Sahil Barı Kokteyl 5 Dakikalık (300sn) Elde Tutma Zamanlayıcıları
+const playerCocktailTimers = {};
 
 function registerEconomyHandlers(io, socket, players, helpers) {
     const { playerFishingTimers, playerTeaTimers, givePlayerTeaWithTimer, getAdminOnlineUsers, getAdminSanctionsList, getPlayersInRoom } = helpers;
@@ -232,6 +234,10 @@ function registerEconomyHandlers(io, socket, players, helpers) {
                     players[socket.id].y = 350;
                     io.to('sahil').emit('playerMoved', { id: socket.id, x: 420, y: 350 });
                 }
+            } else if (players[socket.id].room === 'sahilv2') {
+                players[socket.id].x = 740;
+                players[socket.id].y = 390;
+                io.to('sahilv2').emit('playerMoved', { id: socket.id, x: 740, y: 390 });
             }
         }, SWAN_DURATION_SECONDS * 1000);
 
@@ -276,9 +282,33 @@ function registerEconomyHandlers(io, socket, players, helpers) {
 
         dataManager.savePersistentData();
 
+        // 5 Dakikalık (300 saniye) Geçici İçecek Zamanlayıcısı
+        const COCKTAIL_DURATION_MS = 5 * 60 * 1000;
+        if (playerCocktailTimers[socket.id]) {
+            clearTimeout(playerCocktailTimers[socket.id]);
+        }
+        playerCocktailTimers[socket.id] = setTimeout(() => {
+            if (!players[socket.id]) return;
+            delete playerCocktailTimers[socket.id];
+
+            if (players[socket.id].heldItem === 'cocktail_' + data.id) {
+                players[socket.id].heldItem = 'none';
+                if (userData && userData.avatar) {
+                    userData.avatar.heldItem = 'none';
+                }
+                dataManager.savePersistentData();
+                io.to(players[socket.id].room).emit('playerAvatarChange', {
+                    id: socket.id,
+                    avatar: userData ? userData.avatar : {},
+                    heldItem: 'none'
+                });
+                socket.emit('systemMessage', `🍹 Tropik ${item.name} kokteylinizi keyifle bitirdiniz!`);
+            }
+        }, COCKTAIL_DURATION_MS);
+
         socket.emit('moneyUpdate', userData.money);
         socket.emit('cocktailPurchasedSuccess', item);
-        socket.emit('systemMessage', `${item.icon} [${item.name}] satın aldınız ve afiyetle içtiniz! (-${item.price} TL)`);
+        socket.emit('systemMessage', `${item.icon} [${item.name}] satın aldınız! Elinizde 5 dakika boyunca ferahlatıcı kokteyliniz duracaktır. (-${item.price} TL)`);
 
         let room = players[socket.id].room;
         io.to(room).emit('playerAvatarChange', { id: socket.id, avatar: userData.avatar, heldItem: players[socket.id].heldItem });
@@ -377,17 +407,36 @@ function registerEconomyHandlers(io, socket, players, helpers) {
         });
     });
 
-    // 3. SAHİL BALIK TUTMA
+    // 3. SAHİL & SAHİL V2 BALIK TUTMA
     socket.on('startFishing', () => {
-        if (!players[socket.id] || players[socket.id].room !== 'sahil') return;
+        if (!players[socket.id]) return;
+        let room = players[socket.id].room;
+        if (room !== 'sahil' && room !== 'sahilv2') return;
         if (!checkRateLimit(socket, 'startFishing', 3, 4000)) return;
         if (players[socket.id].isFishing) {
             socket.emit('gameError', "Zaten oltan denizde! Balığın vurmasını bekle...");
             return;
         }
 
+        // Sahil v2 için su/iskele/kumsal konumu kontrolü
+        if (room === 'sahilv2') {
+            let px = players[socket.id].x;
+            let py = players[socket.id].y;
+            let hasSwan = !!players[socket.id].hasSwanBoat;
+            // İskele kontrolü (y ≈ 6 + 0.576 * x)
+            let onPier = (px >= 0 && px <= 675 && Math.abs(py - (6 + 0.576 * px)) <= 32);
+            // Kıyı şeridi
+            let shoreX = (py <= 120 ? 790 - (py/120)*35 : (py <= 240 ? 755 - ((py-120)/120)*115 : (py <= 360 ? 640 - ((py-240)/120)*155 : (py <= 480 ? 485 - ((py-360)/120)*170 : 315 - ((py-480)/145)*165))));
+            let nearWater = (px <= shoreX + 45);
+
+            if (!hasSwan && !onPier && !nearWater) {
+                socket.emit('gameError', "Oltanı suya atabilmek için deniz kenarına, iskeleye gitmeli veya kuğu bisikleti kiralamalısın!");
+                return;
+            }
+        }
+
         players[socket.id].isFishing = true;
-        io.to('sahil').emit('playerFishingState', { id: socket.id, isFishing: true });
+        io.to(room).emit('playerFishingState', { id: socket.id, isFishing: true });
         socket.emit('fishingStarted', { duration: 10 });
 
         if (playerFishingTimers[socket.id]) clearTimeout(playerFishingTimers[socket.id]);
@@ -418,7 +467,7 @@ function registerEconomyHandlers(io, socket, players, helpers) {
             // Çok nadir "Denizden babam çıktı" deyimi kontrolü
             if (chosen.id === 'baban') {
                 dataManager.recordQuestProgress(uName, 'go_fishing', 1);
-                io.to('sahil').emit('playerFishingState', { id: socket.id, isFishing: false });
+                io.to(room).emit('playerFishingState', { id: socket.id, isFishing: false });
                 players[socket.id].pendingFatherChoice = true;
                 socket.emit('fatherCaughtPrompt', {
                     title: "Denizden Baban Çıktı!",
@@ -453,10 +502,10 @@ function registerEconomyHandlers(io, socket, players, helpers) {
                 money: players[socket.id].money
             });
 
-            io.to('sahil').emit('playerFishingState', { id: socket.id, isFishing: false });
+            io.to(room).emit('playerFishingState', { id: socket.id, isFishing: false });
 
             if (['levrek', 'ahtapot', 'inci', 'mercan', 'hazine'].includes(chosen.id)) {
-                io.to('sahil').emit('systemMessage', `🎣 VAY CANINA! ${uName} denizden ${chosen.emoji} ${chosen.name} tuttu! (+${earned} TL${hasDogBonus ? ' 🐶 x1.5 Köpek Bonusu!' : ''})`);
+                io.to(room).emit('systemMessage', `🎣 VAY CANINA! ${uName} denizden ${chosen.emoji} ${chosen.name} tuttu! (+${earned} TL${hasDogBonus ? ' 🐶 x1.5 Köpek Bonusu!' : ''})`);
             }
         }, 10000);
     });
@@ -475,7 +524,10 @@ function registerEconomyHandlers(io, socket, players, helpers) {
                 clearTimeout(playerFishingTimers[socket.id]);
                 delete playerFishingTimers[socket.id];
             }
-            io.to('sahil').emit('playerFishingState', { id: socket.id, isFishing: false });
+            let r = players[socket.id].room;
+            if (r) {
+                io.to(r).emit('playerFishingState', { id: socket.id, isFishing: false });
+            }
         }
     });
 
@@ -969,6 +1021,10 @@ function registerEconomyHandlers(io, socket, players, helpers) {
         if (playerKiraathaneDrinkTimers[socket.id]) {
             clearTimeout(playerKiraathaneDrinkTimers[socket.id]);
             delete playerKiraathaneDrinkTimers[socket.id];
+        }
+        if (playerCocktailTimers[socket.id]) {
+            clearTimeout(playerCocktailTimers[socket.id]);
+            delete playerCocktailTimers[socket.id];
         }
     });
 }

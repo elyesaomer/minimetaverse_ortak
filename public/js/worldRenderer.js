@@ -77,6 +77,10 @@ function renderStaticRoomTo(bctx, room, width, height) {
         if (typeof renderStaticMeydanV2To === 'function') {
             renderStaticMeydanV2To(bctx, width, height);
         }
+    } else if (room === 'sahilv2') {
+        if (typeof renderStaticSahilV2To === 'function') {
+            renderStaticSahilV2To(bctx, width, height);
+        }
     } else if (room.startsWith('house_')) {
         let type = room.replace('house_', '');
         if (typeof renderStaticHouseTo === 'function') {
@@ -1968,6 +1972,12 @@ if (currentRoom === "sanalika_cadde") {
     if (currentRoom === "meydanv2") {
         if (typeof checkMeydanV2Collision === 'function') {
             return checkMeydanV2Collision(x, y);
+        }
+        return false;
+    }
+    if (currentRoom === "sahilv2") {
+        if (typeof checkSahilV2Collision === 'function') {
+            return checkSahilV2Collision(x, y);
         }
         return false;
     }

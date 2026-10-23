@@ -34,38 +34,76 @@
         shadow: 'rgba(0, 0, 0, 0.28)'
     };
 
-    const COMPANION_PALETTES = {
+    // Sprite Yapılandırması: 4 sütun x 16 satır (Toplam 64 kare)
+    // 0-7: 8 Yönlü Standart Idle
+    // 8-15: 8 Yönlü Yürüme (Walk)
+    // Kedide 8. satır (row index 7): İki ayak üstüne kalkıp pati uzatma (Special Idle)
+    const SPRITE_CONFIGS = {
+        mouse: {
+            src: '/assets/pets/tfm_mouse_spritesheet.png',
+            cols: 4,
+            rows: 16
+        },
         cat: {
-            outline: '#30201a',
-            furDark: '#704832',
-            furBase: '#c88a58',
-            furHighlight: '#e8b47d',
-            furBelly: '#f5dfc1',
-            innerEar: '#e99791',
-            nose: '#d77d7d',
-            eye: '#263d35',
-            eyeGlint: '#ffffff',
-            paw: '#c88a58',
-            pawShadow: '#8f6143',
-            collar: '#7c3aed',
-            tag: '#facc15'
+            src: '/assets/pets/cat_spritesheet.png',
+            cols: 4,
+            rows: 16
         },
         dog: {
-            outline: '#38251b',
-            furDark: '#754522',
-            furBase: '#bd7940',
-            furHighlight: '#e6ae69',
-            furBelly: '#f4d7a6',
-            innerEar: '#995b4c',
-            nose: '#28201c',
-            eye: '#211912',
-            eyeGlint: '#ffffff',
-            paw: '#bd7940',
-            pawShadow: '#80532f',
-            collar: '#0f766e',
-            tag: '#facc15'
+            src: '/assets/pets/dog_spritesheet.png',
+            cols: 4,
+            rows: 16
         }
     };
+
+    const DIRECTION_ROW_MAP = {
+        'down': 0,
+        'down-right': 1,
+        'right': 2,
+        'up-right': 3,
+        'up': 4,
+        'up-left': 5,
+        'left': 6,
+        'down-left': 7
+    };
+
+    const spriteImages = {};
+
+    function getOrLoadSpriteImage(species) {
+        const key = species || 'mouse';
+        if (spriteImages[key]) return spriteImages[key];
+
+        const cfg = SPRITE_CONFIGS[key];
+        if (!cfg) return null;
+
+        const info = {
+            loaded: false,
+            img: null,
+            config: cfg
+        };
+
+        if (typeof Image !== 'undefined') {
+            const img = new Image();
+            img.onload = () => {
+                info.img = img;
+                info.loaded = true;
+            };
+            img.onerror = () => {
+                console.warn(`[TfmMouseRenderer] Sprite sheet yüklenemedi: ${cfg.src}`);
+            };
+            img.src = cfg.src;
+        }
+
+        spriteImages[key] = info;
+        return info;
+    }
+
+    if (typeof window !== 'undefined') {
+        getOrLoadSpriteImage('mouse');
+        getOrLoadSpriteImage('cat');
+        getOrLoadSpriteImage('dog');
+    }
+
 
     // 8 Yön Listesi (Game standardıyla birebir uyumlu)
     const DIRECTIONS = [
@@ -115,13 +153,14 @@
         }
 
         /**
-         * Farenin zemin gölgesini çizer
+         * Petin zemin gölgesini çizer (Oyun avatarlarıyla %100 uyumlu zemin elipsi)
+         * (0, 0) petin ayak tabanlarının zeminle temas ettiği noktadır
          */
         drawShadow(ctx, scale = 1) {
             ctx.save();
-            ctx.fillStyle = this.palette.shadow;
+            ctx.fillStyle = "rgba(0, 0, 0, 0.28)";
             ctx.beginPath();
-            ctx.ellipse(0, 10 * scale, 13 * scale, 5 * scale, 0, 0, Math.PI * 2);
+            ctx.ellipse(0, 0, 11 * scale, 4.2 * scale, 0, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
         }
@@ -133,7 +172,7 @@
         draw(ctx, options = {}) {
             const {
                 direction = 'right',
-                animation = 'idle', // 'idle' veya 'walk'
+                animation = 'idle', // 'idle', 'walk', 'special_idle'
                 frame = 0,
                 scale = 1,
                 showShadow = true,
@@ -141,484 +180,103 @@
             } = options;
 
             const dir = this.normalizeDirection(direction);
-            const anim = animation === 'walk' ? 'walk' : 'idle';
-            const frameIdx = Math.floor(frame) % (this.framesPerAnim[anim] || 4);
+            const spriteInfo = getOrLoadSpriteImage(species);
 
-            if (species === 'cat' || species === 'dog') {
-                this.drawCompanion(ctx, species, dir, anim, frameIdx, scale, showShadow);
-                return;
-            }
-
-            ctx.save();
+            // Zemin gölgesi (Avatarlarla uyumlu yumuşak gölge)
             if (showShadow) {
                 this.drawShadow(ctx, scale);
             }
 
+            // Kedi ve köpek için sprite sheet'ten dilimleyip çiz
+            if (species !== 'mouse' && spriteInfo && spriteInfo.loaded && spriteInfo.img) {
+                this.drawFromSpriteSheet(ctx, spriteInfo, species, dir, animation, frame, scale);
+                return;
+            }
+
+            // Fare (Mouse): Pürüzsüz vektörel Transformice çizimi (şeffaf zemin, sıfır pikselleşme ve deliksiz)
+            if (species === 'mouse') {
+                ctx.save();
+                ctx.scale(scale, scale);
+
+                const isFlipped = (dir === 'left' || dir === 'up-left' || dir === 'down-left');
+                if (isFlipped) {
+                    ctx.scale(-1, 1);
+                }
+
+                let baseDir = dir;
+                if (dir === 'left') baseDir = 'right';
+                else if (dir === 'up-left') baseDir = 'up-right';
+                else if (dir === 'down-left') baseDir = 'down-right';
+
+                const anim = animation === 'walk' ? 'walk' : 'idle';
+                const frameIdx = Math.floor(frame) % (this.framesPerAnim[anim] || 4);
+                this.renderBaseDirection(ctx, baseDir, anim, frameIdx);
+
+                ctx.restore();
+                return;
+            }
+        }
+
+        /**
+         * 4 Sütun x 16 Satırlık Sprite Sayfasından İlgili Kareyi Çizer
+         * - 0-7: 8 Yönlü Standart Idle
+         * - 8-15: 8 Yönlü Yürüme (Walk)
+         * - Kedide 8. Satır (Satır İndeksi 7): 2 Ayak Üstünde Pati Uzatma (Special Idle)
+         */
+        drawFromSpriteSheet(ctx, spriteInfo, species, direction, animation, frame, scale) {
+            const img = spriteInfo.img;
+            const cfg = spriteInfo.config;
+            const cols = cfg.cols || 4;
+            const rows = cfg.rows || 16;
+            const cellW = img.width / cols;
+            const cellH = img.height / rows;
+
+            let row = 0;
+            let flipX = false;
+
+            if (animation === 'special_idle') {
+                // Kedinin 8. satırdaki (row 7) 4 karelik iki ayak üstünde pati uzatma animasyonu
+                row = 7;
+            } else if (animation === 'walk') {
+                const dirIdx = DIRECTION_ROW_MAP[direction] !== undefined ? DIRECTION_ROW_MAP[direction] : 0;
+                row = 8 + dirIdx;
+            } else {
+                // Standart Idle
+                if (species === 'cat' && direction === 'down-left') {
+                    // Kedide 8. satır (row 7) özel pati animasyonu olduğundan,
+                    // standart down-left bekleme duruşu için row 1 (down-right) yatay aynalanır.
+                    row = 1;
+                    flipX = true;
+                } else {
+                    const dirIdx = DIRECTION_ROW_MAP[direction] !== undefined ? DIRECTION_ROW_MAP[direction] : 0;
+                    row = dirIdx;
+                }
+            }
+
+            // Kedi standart beklemedeyken (idle) arkasını dönüp dönüp durmasın, sabit dursun (frame 0)
+            // Sadece animasyona (special_idle veya walk) girince hareket etsin
+            let col = Math.floor(frame) % cols;
+            if (species === 'cat' && animation === 'idle') {
+                col = 0;
+            }
+
+            const sx = col * cellW;
+            const sy = row * cellH;
+
+            ctx.save();
             ctx.scale(scale, scale);
 
-            // Simetri kontrolü: Sol yönler (left, up-left, down-left) sağ yönlerin aynalanmasıyla çizilir.
-            const isFlipped = (dir === 'left' || dir === 'up-left' || dir === 'down-left');
-            if (isFlipped) {
+            if (flipX) {
                 ctx.scale(-1, 1);
             }
 
-            // Temel çizim yönü
-            let baseDir = dir;
-            if (dir === 'left') baseDir = 'right';
-            else if (dir === 'up-left') baseDir = 'up-right';
-            else if (dir === 'down-left') baseDir = 'down-right';
+            // Hücre ortalama: (0, 0) petin ayak tabanlarının merkezidir
+            const drawW = cellW;
+            const drawH = cellH;
+            const drawX = -drawW / 2;
+            const drawY = -drawH + 8;
 
-            this.renderBaseDirection(ctx, baseDir, anim, frameIdx);
-
-            ctx.restore();
-        }
-
-        drawCompanion(ctx, species, direction, animation, frame, scale, showShadow) {
-            const P = COMPANION_PALETTES[species];
-            const isFlipped = direction === 'left' || direction === 'up-left' || direction === 'down-left';
-            const dir = isFlipped
-                ? ({ left: 'right', 'up-left': 'up-right', 'down-left': 'down-right' }[direction])
-                : direction;
-            const phase = animation === 'walk' ? (frame % 4) : frame;
-            const bob = animation === 'walk'
-                ? (phase % 2 === 1 ? -1.2 : 0)
-                : Math.sin((phase / 4) * Math.PI * 2) * 0.55;
-            const tailWag = animation === 'walk'
-                ? Math.sin((phase / 4) * Math.PI * 2) * 4
-                : Math.sin((phase / 4) * Math.PI * 2) * 2.5;
-            const step = animation === 'walk' ? Math.sin((phase / 4) * Math.PI * 2) * 2.2 : 0;
-
-            ctx.save();
-            if (showShadow) this.drawShadow(ctx, scale);
-            ctx.scale(scale, scale);
-            if (isFlipped) ctx.scale(-1, 1);
-            ctx.translate(0, bob);
-            this.drawCompanionView(ctx, P, species, dir, step, tailWag, phase);
-            ctx.restore();
-        }
-
-        drawCompanionView(ctx, P, species, direction, step, tailWag, phase) {
-            const isCat = species === 'cat';
-            const isFront = direction === 'down';
-            const isBack = direction === 'up' || direction === 'up-right';
-            const isQuarter = direction === 'down-right' || direction === 'up-right';
-            const headX = isFront || isBack ? 0 : (isQuarter ? 3 : 4);
-            const headY = isFront ? -8 : (isBack ? -6 : -8);
-            const bodyX = isFront || isBack ? 0 : -5;
-            const bodyY = isFront || isBack ? 3 : 2;
-            const bodyW = isFront ? 10 : (isCat ? 13 : 14);
-            const bodyH = isFront ? 7 : (isCat ? 6.8 : 7.5);
-            const tailStartX = isFront ? 0 : -12;
-            const tailStartY = isFront ? 5 : 2;
-
-            ctx.save();
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-
-            this.drawCompanionTail(ctx, P, species, tailStartX, tailStartY, tailWag, isFront, isBack);
-            this.drawCompanionLegs(ctx, P, species, isFront, isBack, step);
-
-            ctx.lineWidth = 1.7;
-            ctx.strokeStyle = P.outline;
-            ctx.fillStyle = P.furBase;
-            ctx.beginPath();
-            ctx.ellipse(bodyX, bodyY, bodyW, bodyH, isQuarter ? -0.12 : 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-
-            ctx.fillStyle = P.furHighlight;
-            ctx.beginPath();
-            ctx.ellipse(bodyX + (isFront ? -1 : 1), bodyY - 3.2, bodyW * 0.67, 2.1, -0.08, Math.PI, Math.PI * 2);
-            ctx.fill();
-
-            if (isCat) {
-                this.drawCatMarkings(ctx, P, bodyX, bodyY, isFront, isBack);
-            } else {
-                this.drawDogMarkings(ctx, P, bodyX, bodyY, isFront, isBack);
-            }
-
-            this.drawCompanionCollar(ctx, P, species, direction);
-            if (isBack) {
-                this.drawCompanionBackHead(ctx, P, species, headX, headY, phase);
-            } else {
-                this.drawCompanionHead(ctx, P, species, headX, headY, direction, phase);
-            }
-            ctx.restore();
-        }
-
-        drawCompanionTail(ctx, P, species, x, y, wag, isFront, isBack) {
-            const isCat = species === 'cat';
-            ctx.save();
-            ctx.strokeStyle = P.outline;
-            ctx.lineWidth = isCat ? 4.0 : 4.8;
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-            if (isCat) {
-                const side = isFront ? 1 : -1;
-                ctx.bezierCurveTo(x + side * (10 + wag), y - 5, x + side * (9 + wag), y - 21, x + side * (15 + wag), y - 25);
-                ctx.stroke();
-                ctx.strokeStyle = P.furBase;
-                ctx.lineWidth = 2.4;
-                ctx.beginPath();
-                ctx.moveTo(x, y);
-                ctx.bezierCurveTo(x + side * (10 + wag), y - 5, x + side * (9 + wag), y - 21, x + side * (15 + wag), y - 25);
-                ctx.stroke();
-                ctx.fillStyle = P.furDark;
-                ctx.beginPath();
-                ctx.arc(x + side * (15 + wag), y - 25, 2.1, 0, Math.PI * 2);
-                ctx.fill();
-            } else {
-                ctx.bezierCurveTo(x - 9, y - 4 + wag, x - 18, y - 12 + wag, x - 17, y - 20 + wag);
-                ctx.stroke();
-                ctx.strokeStyle = P.furBase;
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.moveTo(x, y);
-                ctx.bezierCurveTo(x - 9, y - 4 + wag, x - 18, y - 12 + wag, x - 17, y - 20 + wag);
-                ctx.stroke();
-                ctx.fillStyle = P.furHighlight;
-                ctx.beginPath();
-                ctx.arc(x - 17, y - 20 + wag, 2.3, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            if (isBack) {
-                ctx.strokeStyle = P.outline;
-                ctx.lineWidth = 1.2;
-                ctx.beginPath();
-                ctx.moveTo(-3, 7);
-                ctx.quadraticCurveTo(0, 10, 3, 7);
-                ctx.stroke();
-            }
-            ctx.restore();
-        }
-
-        drawCompanionLegs(ctx, P, species, isFront, isBack, step) {
-            const isCat = species === 'cat';
-            const legColor = P.furDark;
-            const legs = isFront
-                ? [[-8, 6, -step], [8, 6, step], [-4, 7, step], [4, 7, -step]]
-                : [[-12, 6, -step], [-5, 7, step], [4, 7, -step], [11, 6, step]];
-
-            legs.forEach(([x, y, offset], index) => {
-                const legX = isFront ? x : x + offset * 0.45;
-                const legY = y + offset * 0.35;
-                ctx.fillStyle = index < 2 ? P.pawShadow : legColor;
-                ctx.beginPath();
-                ctx.ellipse(legX, legY, isCat ? 2.8 : 3.2, isCat ? 3.3 : 3.5, offset * 0.035, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.strokeStyle = P.outline;
-                ctx.lineWidth = 1;
-                ctx.stroke();
-
-                ctx.fillStyle = P.paw;
-                ctx.beginPath();
-                ctx.ellipse(legX + 0.4, legY + 1.6, 2.5, 1.6, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.strokeStyle = P.outline;
-                ctx.lineWidth = 0.7;
-                ctx.stroke();
-                ctx.strokeStyle = P.pawShadow;
-                ctx.lineWidth = 0.55;
-                ctx.beginPath();
-                ctx.moveTo(legX - 0.6, legY + 1);
-                ctx.lineTo(legX - 0.6, legY + 2.1);
-                ctx.moveTo(legX + 0.8, legY + 1);
-                ctx.lineTo(legX + 0.8, legY + 2.1);
-                ctx.stroke();
-            });
-        }
-
-        drawCatMarkings(ctx, P, x, y, isFront, isBack) {
-            ctx.save();
-            ctx.strokeStyle = P.furDark;
-            ctx.lineWidth = 1.3;
-            ctx.lineCap = 'round';
-            if (!isFront && !isBack) {
-                [-7, -3, 1].forEach((stripeX, index) => {
-                    ctx.beginPath();
-                    ctx.moveTo(x + stripeX, y - 5);
-                    ctx.quadraticCurveTo(x + stripeX + 1.2, y - 2, x + stripeX + 0.3, y + 0.2);
-                    ctx.stroke();
-                });
-                ctx.fillStyle = P.furBelly;
-                ctx.beginPath();
-                ctx.ellipse(x + 6, y + 2, 4.4, 3.2, -0.15, 0, Math.PI * 2);
-                ctx.fill();
-            } else if (isFront) {
-                ctx.fillStyle = P.furBelly;
-                ctx.beginPath();
-                ctx.ellipse(0, y + 1, 5.2, 4.2, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.strokeStyle = P.furDark;
-                [-3, 0, 3].forEach(xPos => {
-                    ctx.beginPath();
-                    ctx.moveTo(xPos, y - 5);
-                    ctx.lineTo(xPos, y - 2.8);
-                    ctx.stroke();
-                });
-            } else {
-                [-6, -2, 2, 6].forEach(stripeX => {
-                    ctx.beginPath();
-                    ctx.moveTo(stripeX, y - 2);
-                    ctx.quadraticCurveTo(stripeX + 1, y + 2, stripeX, y + 4);
-                    ctx.stroke();
-                });
-            }
-            ctx.restore();
-        }
-
-        drawDogMarkings(ctx, P, x, y, isFront, isBack) {
-            ctx.save();
-            if (isFront || isBack) {
-                ctx.fillStyle = P.furDark;
-                ctx.beginPath();
-                ctx.ellipse(-5.5, y - 2, 2.2, 3, -0.25, 0, Math.PI * 2);
-                ctx.ellipse(5.5, y - 2, 2.2, 3, 0.25, 0, Math.PI * 2);
-                ctx.fill();
-            } else {
-                ctx.fillStyle = P.furBelly;
-                ctx.beginPath();
-                ctx.ellipse(x + 6, y + 2, 5, 3.6, -0.15, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = P.furHighlight;
-                ctx.beginPath();
-                ctx.ellipse(x - 9, y - 1, 3.2, 3.5, -0.25, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = P.outline;
-                ctx.beginPath();
-                ctx.arc(x - 9, y - 2.2, 0.7, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            ctx.restore();
-        }
-
-        drawCompanionHead(ctx, P, species, x, y, direction, phase) {
-            const isCat = species === 'cat';
-            const isQuarter = direction === 'down-right' || direction === 'up-right';
-            ctx.save();
-            ctx.lineWidth = 1.6;
-            ctx.strokeStyle = P.outline;
-
-            if (isCat) {
-                this.drawCatEar(ctx, P, x - 4.5, y - 5.5, -0.12, true);
-                this.drawCatEar(ctx, P, x + 4.5, y - 5.5, 0.12, false);
-            } else {
-                this.drawDogEar(ctx, P, x - 4.5, y - 5, -0.35, true, phase);
-                this.drawDogEar(ctx, P, x + 4.5, y - 5, 0.35, false, phase);
-            }
-
-            ctx.fillStyle = P.furBase;
-            ctx.beginPath();
-            ctx.ellipse(x, y, isCat ? 8.2 : 8.6, isCat ? 7.5 : 7.8, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-            ctx.fillStyle = P.furHighlight;
-            ctx.beginPath();
-            ctx.ellipse(x + 1, y - 3.2, 5.8, 3.1, -0.08, Math.PI, Math.PI * 2);
-            ctx.fill();
-
-            if (isCat) {
-                ctx.fillStyle = P.furDark;
-                ctx.beginPath();
-                ctx.moveTo(x - 3, y - 6.2);
-                ctx.lineTo(x - 1.8, y - 3.4);
-                ctx.lineTo(x - 0.4, y - 6.4);
-                ctx.fill();
-            } else {
-                this.drawDogBlaze(ctx, P, x, y);
-            }
-
-            const eyeY = y - 1.4;
-            if (isQuarter) {
-                this.drawPetEye(ctx, P, x + 3.3, eyeY, isCat ? 1.3 : 1.25);
-                this.drawPetEye(ctx, P, x - 1.4, eyeY + 0.5, 0.85);
-            } else {
-                this.drawPetEye(ctx, P, x - 3.1, eyeY, isCat ? 1.35 : 1.25);
-                this.drawPetEye(ctx, P, x + 3.1, eyeY, isCat ? 1.35 : 1.25);
-            }
-
-            this.drawPetMuzzle(ctx, P, species, x, y + 2.0, isQuarter);
-            if (isCat) this.drawCatWhiskers(ctx, P, x, y + 2.2);
-            ctx.restore();
-        }
-
-        drawCompanionBackHead(ctx, P, species, x, y, phase) {
-            const isCat = species === 'cat';
-            ctx.save();
-            if (isCat) {
-                this.drawCatEar(ctx, P, x - 4.8, y - 4, -0.12, true);
-                this.drawCatEar(ctx, P, x + 4.8, y - 4, 0.12, false);
-            } else {
-                this.drawDogEar(ctx, P, x - 5, y - 4, -0.4, true, phase);
-                this.drawDogEar(ctx, P, x + 5, y - 4, 0.4, false, phase);
-            }
-            ctx.fillStyle = P.furBase;
-            ctx.strokeStyle = P.outline;
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.ellipse(x, y + 1, isCat ? 7.5 : 8, 7, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-            if (species === 'dog') {
-                ctx.fillStyle = P.furDark;
-                ctx.beginPath();
-                ctx.ellipse(x, y + 6, 3, 1.2, 0, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            ctx.restore();
-        }
-
-        drawCatEar(ctx, P, x, y, rotation, isFar) {
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.rotate(rotation);
-            ctx.fillStyle = P.outline;
-            ctx.beginPath();
-            ctx.moveTo(-4.1, 2.2);
-            ctx.lineTo(-2.5, -6.8);
-            ctx.quadraticCurveTo(-2.1, -8, -0.8, -6.8);
-            ctx.lineTo(4.1, 2.2);
-            ctx.closePath();
-            ctx.fill();
-            ctx.fillStyle = isFar ? P.furDark : P.furBase;
-            ctx.beginPath();
-            ctx.moveTo(-3.1, 1.3);
-            ctx.lineTo(-2.1, -5.5);
-            ctx.lineTo(3.1, 1.3);
-            ctx.closePath();
-            ctx.fill();
-            ctx.fillStyle = P.innerEar;
-            ctx.beginPath();
-            ctx.moveTo(-1.8, 0.2);
-            ctx.lineTo(-1.4, -3.9);
-            ctx.lineTo(1.9, 0.2);
-            ctx.closePath();
-            ctx.fill();
-            ctx.restore();
-        }
-
-        drawDogEar(ctx, P, x, y, rotation, isFar, phase) {
-            const flap = phase % 2 === 1 ? 0.12 : -0.08;
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.rotate(rotation + (isFar ? -flap : flap));
-            ctx.fillStyle = P.outline;
-            ctx.beginPath();
-            ctx.ellipse(0, 1.8, 4.2, 7.3, isFar ? -0.18 : 0.18, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = isFar ? P.furDark : P.furBase;
-            ctx.beginPath();
-            ctx.ellipse(0, 1.2, 3.2, 6.2, isFar ? -0.18 : 0.18, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = P.innerEar;
-            ctx.beginPath();
-            ctx.ellipse(0, 2, 1.6, 4.2, isFar ? -0.18 : 0.18, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-        }
-
-        drawDogBlaze(ctx, P, x, y) {
-            ctx.fillStyle = P.furBelly;
-            ctx.beginPath();
-            ctx.moveTo(x - 1.2, y - 5.5);
-            ctx.quadraticCurveTo(x + 0.4, y - 3.4, x - 0.5, y - 1.2);
-            ctx.quadraticCurveTo(x + 0.1, y + 0.4, x + 1.2, y + 1.0);
-            ctx.lineTo(x + 0.6, y - 5.6);
-            ctx.closePath();
-            ctx.fill();
-        }
-
-        drawPetEye(ctx, P, x, y, radius) {
-            ctx.fillStyle = P.eye;
-            ctx.beginPath();
-            ctx.ellipse(x, y, radius, radius * 1.35, -0.08, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = P.eyeGlint;
-            ctx.beginPath();
-            ctx.arc(x + radius * 0.28, y - radius * 0.38, radius * 0.38, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        drawPetMuzzle(ctx, P, species, x, y, isQuarter) {
-            const isCat = species === 'cat';
-            ctx.fillStyle = P.furBelly;
-            ctx.beginPath();
-            if (isCat) {
-                ctx.ellipse(x - 1.5, y, 3.2, 2.2, 0, 0, Math.PI * 2);
-                ctx.ellipse(x + 1.5, y, 3.2, 2.2, 0, 0, Math.PI * 2);
-            } else {
-                ctx.ellipse(x + (isQuarter ? 1.2 : 0), y, 4.3, 3.1, 0, 0, Math.PI * 2);
-            }
-            ctx.fill();
-            ctx.fillStyle = P.nose;
-            ctx.beginPath();
-            if (isCat) {
-                ctx.moveTo(x - 1.3, y - 1.2);
-                ctx.lineTo(x + 1.3, y - 1.2);
-                ctx.lineTo(x, y + 0.4);
-                ctx.closePath();
-                ctx.fill();
-            } else {
-                ctx.ellipse(x + (isQuarter ? 1.2 : 0), y - 1.2, 1.7, 1.25, 0, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            ctx.strokeStyle = P.outline;
-            ctx.lineWidth = 0.8;
-            ctx.beginPath();
-            ctx.moveTo(x, y + 0.2);
-            ctx.lineTo(x, y + 1.6);
-            ctx.quadraticCurveTo(x + 1.1, y + 2.1, x + 2, y + 1.3);
-            ctx.stroke();
-            if (!isCat) {
-                ctx.fillStyle = P.outline;
-                ctx.beginPath();
-                ctx.arc(x - 2.7, y - 0.2, 0.65, 0, Math.PI * 2);
-                ctx.arc(x + 2.7, y - 0.2, 0.65, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-
-        drawCatWhiskers(ctx, P, x, y) {
-            ctx.save();
-            ctx.strokeStyle = P.furBelly;
-            ctx.lineWidth = 0.55;
-            [[-1, -1], [-1, 0.3], [1, -1], [1, 0.3]].forEach(([side, offset]) => {
-                ctx.beginPath();
-                ctx.moveTo(x + side * 2.5, y + offset);
-                ctx.lineTo(x + side * 8, y + offset * 1.8);
-                ctx.stroke();
-            });
-            ctx.restore();
-        }
-
-        drawCompanionCollar(ctx, P, species, direction) {
-            const isFront = direction === 'down';
-            const isBack = direction === 'up' || direction === 'up-right';
-            ctx.save();
-            ctx.strokeStyle = P.collar;
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            if (isFront || isBack) {
-                ctx.arc(0, -2, 7.4, 0.18, Math.PI - 0.18);
-            } else {
-                ctx.moveTo(-1, -3);
-                ctx.quadraticCurveTo(1, 0.5, 5, 2.2);
-            }
-            ctx.stroke();
-            ctx.fillStyle = P.tag;
-            ctx.strokeStyle = P.outline;
-            ctx.lineWidth = 0.65;
-            ctx.beginPath();
-            if (isFront || isBack) {
-                ctx.moveTo(-1.3, 4.2);
-                ctx.lineTo(1.3, 4.2);
-                ctx.lineTo(0, 7);
-                ctx.closePath();
-            } else {
-                ctx.arc(4.6, 2.4, species === 'cat' ? 1.5 : 1.8, 0, Math.PI * 2);
-            }
-            ctx.fill();
-            ctx.stroke();
+            ctx.drawImage(img, sx, sy, cellW, cellH, drawX, drawY, drawW, drawH);
             ctx.restore();
         }
 
@@ -1195,14 +853,6 @@
             ctx.beginPath();
             ctx.moveTo(startX, startY);
             ctx.bezierCurveTo(cp1X, cp1Y, cp2X, cp2Y, endX, endY);
-            ctx.stroke();
-
-            // Kuyruk ucu aydınlatması
-            ctx.strokeStyle = P.tailHighlight;
-            ctx.lineWidth = 1.2;
-            ctx.beginPath();
-            ctx.moveTo(cp2X, cp2Y);
-            ctx.lineTo(endX, endY);
             ctx.stroke();
 
             ctx.restore();

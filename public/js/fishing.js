@@ -4,7 +4,7 @@ let fishingCountdownInterval = null;
 let fishingRemainingSeconds = 10;
 
 function triggerFishing() {
-    if (typeof currentRoom !== 'undefined' && currentRoom !== 'sahil') return;
+    if (typeof currentRoom !== 'undefined' && currentRoom !== 'sahil' && currentRoom !== 'sahilv2') return;
     if (typeof players !== 'undefined' && typeof myId !== 'undefined' && players[myId] && players[myId].isFishing) {
         if (window.socket) window.socket.emit('cancelFishing');
         return;
